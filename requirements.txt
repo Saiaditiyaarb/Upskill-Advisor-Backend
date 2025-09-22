@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pydantic
+langchain
+langgraph
+sentence-transformers
+rank-bm25
+python-dotenv
+pinecone-client
+pytest
+pytest-asyncio
+httpx
+fastapi-cache2
