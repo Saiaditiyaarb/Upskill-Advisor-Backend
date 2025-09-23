@@ -2,9 +2,11 @@ fastapi
 uvicorn
 pydantic
 langchain
-langchain-openai
+langchain-core
 langgraph
 sentence-transformers
+transformers
+torch
 rank-bm25
 python-dotenv
 pinecone-client
@@ -12,3 +14,5 @@ pytest
 pytest-asyncio
 httpx
 fastapi-cache2
+accelerate
+safetensors

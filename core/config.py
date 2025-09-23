@@ -26,12 +26,37 @@ from pydantic import BaseModel
 
 class Settings(BaseModel):
     environment: str = "dev"
+
     # Pinecone (optional; service-level code should gracefully degrade if missing)
     pinecone_api_key: Optional[str] = None
     pinecone_index: Optional[str] = None
 
     # Embedding model used by ingestion (service falls back to simple ranking if unavailable)
-    embedding_model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
+    embedding_model_name: str = "all-MiniLM-L6-v2"
+
+    # Local LLM Configuration
+    local_llm_model: str = "microsoft/DialoGPT-medium"
+    use_local_llm: bool = True
+
+    # Cross-encoder model for re-ranking
+    cross_encoder_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    use_cross_encoder: bool = True
+
+    # Model cache directory
+    transformers_cache: str = "./models_cache"
+
+    # Performance settings
+    max_workers: int = 4
+    batch_size: int = 32
+    max_sequence_length: int = 512
+
+    # Feature flags
+    use_pinecone: bool = False
+    enable_jd_ingestion: bool = True
+
+    # File paths
+    courses_json: str = "courses.json"
+    jd_source_path: str = "job_descriptions"
 
     # API versioning (useful for mounting routers and future deprecations)
     api_v1_prefix: str = "/api/v1"
@@ -48,8 +73,18 @@ def get_settings() -> Settings:
         environment=os.getenv("ENVIRONMENT", "dev"),
         pinecone_api_key=os.getenv("PINECONE_API_KEY"),
         pinecone_index=os.getenv("PINECONE_INDEX"),
-        embedding_model_name=os.getenv(
-            "EMBEDDING_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2"
-        ),
+        embedding_model_name=os.getenv("EMBEDDING_MODEL_NAME", "all-MiniLM-L6-v2"),
+        local_llm_model=os.getenv("LOCAL_LLM_MODEL", "microsoft/DialoGPT-medium"),
+        use_local_llm=os.getenv("USE_LOCAL_LLM", "true").lower() == "true",
+        cross_encoder_model=os.getenv("CROSS_ENCODER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2"),
+        use_cross_encoder=os.getenv("USE_CROSS_ENCODER", "true").lower() == "true",
+        transformers_cache=os.getenv("TRANSFORMERS_CACHE", "./models_cache"),
+        max_workers=int(os.getenv("MAX_WORKERS", "4")),
+        batch_size=int(os.getenv("BATCH_SIZE", "32")),
+        max_sequence_length=int(os.getenv("MAX_SEQUENCE_LENGTH", "512")),
+        use_pinecone=os.getenv("USE_PINECONE", "false").lower() == "true",
+        enable_jd_ingestion=os.getenv("ENABLE_JD_INGESTION", "true").lower() == "true",
+        courses_json=os.getenv("COURSES_JSON", "courses.json"),
+        jd_source_path=os.getenv("JD_SOURCE_PATH", "job_descriptions"),
         api_v1_prefix=os.getenv("API_V1_PREFIX", "/api/v1"),
     )

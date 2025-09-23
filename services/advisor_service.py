@@ -22,10 +22,17 @@ logger = logging.getLogger("advisor")
 
 def _get_cross_encoder():
     """Get cross-encoder model for re-ranking, with graceful fallback."""
+    from core.config import get_settings
+    settings = get_settings()
+
+    if not settings.use_cross_encoder:
+        logger.info("Cross-encoder disabled in configuration")
+        return None
+
     try:
         from sentence_transformers import CrossEncoder
-        model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
-        logger.info("Cross-encoder model loaded successfully")
+        model = CrossEncoder(settings.cross_encoder_model)
+        logger.info(f"Cross-encoder model loaded successfully: {settings.cross_encoder_model}")
         return model
     except Exception as e:
         logger.warning(f"Cross-encoder unavailable, falling back to overlap scoring: {e}")
@@ -99,19 +106,19 @@ async def _make_plan_heuristic(missing_skills: Iterable[str], top_courses: List[
 
 
 async def _make_plan_llm(user_skills: List[str], target_skills: List[str], courses: List[Course], years_experience: Optional[int] = None, goal_role: Optional[str] = None) -> Optional[Dict[str, Any]]:
-    """Enhanced LLM-based plan generation with sophisticated prompt and JSON output parsing."""
+    """Enhanced LLM-based plan generation using local models with sophisticated prompt and JSON output parsing."""
     try:
-        from langchain.prompts import PromptTemplate
-        from langchain_openai import ChatOpenAI
-        from langchain_core.output_parsers import JsonOutputParser
-        from langchain_core.exceptions import OutputParserException
+        from services.local_llm import get_llm_with_fallback, LocalJsonOutputParser, extract_json_from_text
     except Exception as e:
-        logger.warning(f"LangChain dependencies unavailable: {e}")
+        logger.warning(f"Local LLM dependencies unavailable: {e}")
         return None
 
     try:
+        # Get local LLM instance
+        llm = get_llm_with_fallback()
+
         # Enhanced prompt template acting as expert career coach
-        tmpl = """You are an expert career coach and learning advisor with deep knowledge of professional development paths.
+        prompt_template = """You are an expert career coach and learning advisor with deep knowledge of professional development paths.
 
 CONTEXT:
 - Current Skills: {user_skills}
@@ -124,7 +131,7 @@ TASK:
 Create a comprehensive, personalized learning plan that bridges the gap between current and target skills. Consider the user's experience level and career goals.
 
 OUTPUT FORMAT:
-Return a JSON object with the following structure:
+Return ONLY a valid JSON object with the following structure (no additional text):
 {{
     "plan": [
         {{
@@ -157,21 +164,9 @@ GUIDELINES:
 4. Create a realistic timeline with clear phases
 5. Include practical advice in the notes section
 6. Map target skills to specific learning objectives
+7. Return ONLY valid JSON, no markdown or additional formatting
 
 Generate the learning plan:"""
-
-        # Set up the JSON output parser
-        parser = JsonOutputParser()
-
-        prompt = PromptTemplate(
-            template=tmpl,
-            input_variables=["user_skills", "target_skills", "years_experience", "goal_role", "courses"]
-        )
-
-        llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.1)
-
-        # Create the chain
-        chain = prompt | llm | parser
 
         # Prepare course information with more detail
         course_info = []
@@ -186,30 +181,31 @@ Generate the learning plan:"""
                 course_detail += f", Provider: {c.provider}"
             course_info.append(course_detail)
 
-        inputs = {
-            "user_skills": ", ".join(user_skills) if user_skills else "None specified",
-            "target_skills": ", ".join(target_skills) if target_skills else "General professional development",
-            "years_experience": str(years_experience) if years_experience is not None else "Not specified",
-            "goal_role": goal_role or "Professional development",
-            "courses": "\n".join(course_info) if course_info else "No specific courses available"
-        }
+        # Format the prompt with actual values
+        formatted_prompt = prompt_template.format(
+            user_skills=", ".join(user_skills) if user_skills else "None specified",
+            target_skills=", ".join(target_skills) if target_skills else "General professional development",
+            years_experience=str(years_experience) if years_experience is not None else "Not specified",
+            goal_role=goal_role or "Professional development",
+            courses="\n".join(course_info) if course_info else "No specific courses available"
+        )
 
-        # Execute the chain
-        result = await chain.ainvoke(inputs)
+        # Generate response using local LLM
+        response = llm.generate(formatted_prompt, max_new_tokens=512, temperature=0.1)
+
+        # Parse JSON from response
+        result = extract_json_from_text(response)
 
         # Validate the result structure
         if isinstance(result, dict) and "plan" in result:
-            logger.info("LLM plan generation successful with enhanced prompt")
+            logger.info("Local LLM plan generation successful")
             return result
         else:
-            logger.warning("LLM returned invalid structure, falling back to heuristic")
+            logger.warning("Local LLM returned invalid structure, falling back to heuristic")
             return None
 
-    except OutputParserException as e:
-        logger.warning(f"JSON parsing failed: {e}")
-        return None
     except Exception as e:
-        logger.warning(f"LLM plan generation failed: {e}")
+        logger.warning(f"Local LLM plan generation failed: {e}")
         return None
 
 

@@ -169,25 +169,25 @@ def _load_jds_from_json_data(data: List[Dict[str, Any]]) -> List[str]:
 
 
 async def _extract_entities_llm(jd_text: str) -> Optional[JobDescription]:
-    """Extract structured entities from job description using LLM."""
+    """Extract structured entities from job description using local LLM."""
     try:
-        from langchain.prompts import PromptTemplate
-        from langchain_openai import ChatOpenAI
-        from langchain_core.output_parsers import JsonOutputParser
-        from langchain_core.exceptions import OutputParserException
+        from services.local_llm import get_llm_with_fallback, extract_json_from_text
     except Exception as e:
-        logger.warning(f"LangChain dependencies unavailable for LLM extraction: {e}")
+        logger.warning(f"Local LLM dependencies unavailable for LLM extraction: {e}")
         return None
 
     try:
+        # Get local LLM instance
+        llm = get_llm_with_fallback()
+
         # Enhanced prompt for job description entity extraction
-        tmpl = """You are an expert HR analyst. Extract structured information from the following job description.
+        prompt_template = """You are an expert HR analyst. Extract structured information from the following job description.
 
 JOB DESCRIPTION:
 {jd_text}
 
 TASK:
-Extract the following information and return as JSON:
+Extract the following information and return ONLY a valid JSON object (no additional text):
 
 {{
     "job_title": "extracted job title",
@@ -207,19 +207,18 @@ GUIDELINES:
 4. If information is not available, use null
 5. Focus on hard requirements, not nice-to-haves
 6. Extract 5-15 most important skills
+7. Return ONLY valid JSON, no markdown or additional formatting
 
 Extract the information:"""
 
-        parser = JsonOutputParser()
-        prompt = PromptTemplate(
-            template=tmpl,
-            input_variables=["jd_text"]
-        )
+        # Format the prompt with the job description text (limit length)
+        formatted_prompt = prompt_template.format(jd_text=jd_text[:4000])
 
-        llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.1)
-        chain = prompt | llm | parser
+        # Generate response using local LLM
+        response = llm.generate(formatted_prompt, max_new_tokens=256, temperature=0.1)
 
-        result = await chain.ainvoke({"jd_text": jd_text[:4000]})  # Limit text length
+        # Parse JSON from response
+        result = extract_json_from_text(response)
 
         if isinstance(result, dict):
             jd_id = _generate_jd_id(jd_text)
@@ -235,13 +234,11 @@ Extract the information:"""
                 job_type=result.get("job_type"),
                 salary_range=result.get("salary_range"),
                 description=jd_text[:1000],  # Store truncated description
-                metadata={"extraction_method": "llm"}
+                metadata={"extraction_method": "local_llm"}
             )
 
-    except OutputParserException as e:
-        logger.warning(f"JSON parsing failed for LLM extraction: {e}")
     except Exception as e:
-        logger.warning(f"LLM entity extraction failed: {e}")
+        logger.warning(f"Local LLM entity extraction failed: {e}")
 
     return None
 
