@@ -2,6 +2,7 @@ fastapi
 uvicorn
 pydantic
 langchain
+langchain-openai
 langgraph
 sentence-transformers
 rank-bm25
