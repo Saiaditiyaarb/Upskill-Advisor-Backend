@@ -34,6 +34,11 @@ class Settings(BaseModel):
     # Embedding model used by ingestion (service falls back to simple ranking if unavailable)
     embedding_model_name: str = "all-MiniLM-L6-v2"
 
+    # OpenRouter API Configuration
+    openrouter_api_key: Optional[str] = None
+    openrouter_api_base: str = "https://openrouter.ai/api/v1"
+    openrouter_model: str = "mistralai/mistral-7b-instruct"
+
     # Local LLM Configuration
     local_llm_model: str = "microsoft/DialoGPT-medium"
     use_local_llm: bool = True
@@ -74,6 +79,9 @@ def get_settings() -> Settings:
         pinecone_api_key=os.getenv("PINECONE_API_KEY"),
         pinecone_index=os.getenv("PINECONE_INDEX"),
         embedding_model_name=os.getenv("EMBEDDING_MODEL_NAME", "all-MiniLM-L6-v2"),
+        openrouter_api_key=os.getenv("OPENROUTER_API_KEY"),
+        openrouter_api_base=os.getenv("OPENROUTER_API_BASE", "https://openrouter.ai/api/v1"),
+        openrouter_model=os.getenv("OPENROUTER_MODEL", "mistralai/mistral-7b-instruct"),
         local_llm_model=os.getenv("LOCAL_LLM_MODEL", "microsoft/DialoGPT-medium"),
         use_local_llm=os.getenv("USE_LOCAL_LLM", "true").lower() == "true",
         cross_encoder_model=os.getenv("CROSS_ENCODER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2"),
