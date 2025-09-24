@@ -8,16 +8,21 @@ Future-proofing notes:
 """
 from __future__ import annotations
 
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+from typing import Any, Dict, Generic, List, Literal, Optional, TypeVar
 
 from pydantic import BaseModel, Field
 
 from .course import Course
 
 
+class SkillDetail(BaseModel):
+    name: str = Field(description="Name of the skill")
+    expertise: Literal["Beginner", "Intermediate", "Advanced"] = Field(description="Level of expertise in this skill")
+
+
 class UserProfile(BaseModel):
-    skills: List[str] = Field(default_factory=list, description="Current user skills")
-    target_skills: List[str] = Field(default_factory=list, description="Skills user aims to acquire")
+    current_skills: List[SkillDetail] = Field(default_factory=list, description="Current user skills with expertise levels")
+    goal_role: str = Field(description="Target job role or career goal")
     years_experience: Optional[int] = Field(default=None, ge=0, description="Years of professional experience")
 
 
