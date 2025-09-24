@@ -30,8 +30,10 @@ def test_post_advise_endpoint_contract():
 
     payload = {
         "profile": {
-            "skills": ["sql"],
-            "target_skills": ["python"],
+            "current_skills": [
+                {"name": "SQL", "expertise": "Intermediate"}
+            ],
+            "goal_role": "Data Engineer",
             "years_experience": 3
         }
     }
