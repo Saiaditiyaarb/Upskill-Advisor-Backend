@@ -105,30 +105,44 @@ async def _make_plan_heuristic(missing_skills: Iterable[str], top_courses: List[
     return plan
 
 
-async def _make_plan_llm(user_skills: List[str], target_skills: List[str], courses: List[Course], years_experience: Optional[int] = None, goal_role: Optional[str] = None) -> Optional[Dict[str, Any]]:
-    """Enhanced LLM-based plan generation using local models with sophisticated prompt and JSON output parsing."""
+async def _make_plan_llm(current_skills: List[Dict[str, str]], goal_role: str, courses: List[Course], years_experience: Optional[int] = None) -> Optional[Dict[str, Any]]:
+    """Enhanced LLM-based plan generation using OpenRouter API with sophisticated prompt and JSON output parsing."""
     try:
-        from services.local_llm import get_llm_with_fallback, LocalJsonOutputParser, extract_json_from_text
+        from langchain_openai import ChatOpenAI
+        from core.config import get_settings
+        import json
     except Exception as e:
-        logger.warning(f"Local LLM dependencies unavailable: {e}")
+        logger.warning(f"OpenRouter dependencies unavailable: {e}")
         return None
 
     try:
-        # Get local LLM instance
-        llm = get_llm_with_fallback()
+        # Get settings and configure OpenRouter
+        settings = get_settings()
+
+        if not settings.openrouter_api_key:
+            logger.warning("OpenRouter API key not configured")
+            return None
+
+        # Initialize ChatOpenAI with OpenRouter configuration
+        llm = ChatOpenAI(
+            base_url=settings.openrouter_api_base,
+            api_key=settings.openrouter_api_key,
+            model=settings.openrouter_model,
+            temperature=0.1,
+            max_tokens=512
+        )
 
         # Enhanced prompt template acting as expert career coach
         prompt_template = """You are an expert career coach and learning advisor with deep knowledge of professional development paths.
 
 CONTEXT:
-- Current Skills: {user_skills}
-- Target Skills: {target_skills}
+- Current Skills with Expertise: {current_skills}
 - Years of Experience: {years_experience}
 - Goal Role: {goal_role}
 - Available Courses: {courses}
 
 TASK:
-Create a comprehensive, personalized learning plan that bridges the gap between current and target skills. Consider the user's experience level and career goals.
+Create a comprehensive, personalized learning plan to help the user advance toward their goal role. Consider their current skill levels and experience to recommend appropriate courses and learning progression.
 
 OUTPUT FORMAT:
 Return ONLY a valid JSON object with the following structure (no additional text):
@@ -182,39 +196,64 @@ Generate the learning plan:"""
             course_info.append(course_detail)
 
         # Format the prompt with actual values
+        current_skills_text = ", ".join([f"{skill['name']} ({skill['expertise']})" for skill in current_skills]) if current_skills else "None specified"
+
         formatted_prompt = prompt_template.format(
-            user_skills=", ".join(user_skills) if user_skills else "None specified",
-            target_skills=", ".join(target_skills) if target_skills else "General professional development",
+            current_skills=current_skills_text,
             years_experience=str(years_experience) if years_experience is not None else "Not specified",
-            goal_role=goal_role or "Professional development",
+            goal_role=goal_role,
             courses="\n".join(course_info) if course_info else "No specific courses available"
         )
 
-        # Generate response using local LLM
-        response = llm.generate(formatted_prompt, max_new_tokens=512, temperature=0.1)
+        # Generate response using OpenRouter
+        from langchain_core.messages import HumanMessage
 
-        # Parse JSON from response
-        result = extract_json_from_text(response)
+        messages = [HumanMessage(content=formatted_prompt)]
+        response = llm.invoke(messages)
+
+        # Parse JSON from response content
+        response_text = response.content if hasattr(response, 'content') else str(response)
+
+        # Extract JSON from the response
+        try:
+            # Try to parse the entire response as JSON first
+            result = json.loads(response_text)
+        except json.JSONDecodeError:
+            # If that fails, try to extract JSON from text
+            import re
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            if json_match:
+                try:
+                    result = json.loads(json_match.group())
+                except json.JSONDecodeError:
+                    logger.warning("Failed to parse JSON from OpenRouter response")
+                    return None
+            else:
+                logger.warning("No JSON found in OpenRouter response")
+                return None
 
         # Validate the result structure
         if isinstance(result, dict) and "plan" in result:
-            logger.info("Local LLM plan generation successful")
+            logger.info("OpenRouter LLM plan generation successful")
             return result
         else:
-            logger.warning("Local LLM returned invalid structure, falling back to heuristic")
+            logger.warning("OpenRouter LLM returned invalid structure, falling back to heuristic")
             return None
 
     except Exception as e:
-        logger.warning(f"Local LLM plan generation failed: {e}")
+        logger.warning(f"OpenRouter LLM plan generation failed: {e}")
         return None
 
 
 async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -> AdviseResult:
     """Asynchronous RAG-based advisor using a retriever with cross-encoder re-ranking and LLM-backed plan generation."""
-    # Typed profile usage
+    # Typed profile usage with new schema
     profile = request.profile
-    user_skills = set(map(str, profile.skills))
-    target_skills = set(map(str, profile.target_skills))
+    user_skills = set(skill.name for skill in profile.current_skills)
+
+    # For target skills, we'll derive them from the goal role and current skills
+    # This is a simplified approach - in practice, you might want to have a more sophisticated mapping
+    target_skills = set()  # Will be populated based on goal role analysis
 
     # Retrieve a larger set of initial candidates for re-ranking (5x the final top_k)
     initial_candidates = max(top_k * 5, 25)  # Ensure we have enough candidates
@@ -222,8 +261,11 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
     retrieved: List[Course] = await retriever.hybrid_search(query, top_k=initial_candidates)
 
     # Construct query text from user profile for cross-encoder
-    goal_role = getattr(profile, 'goal_role', None) or "professional development"
-    query_text = f"Goal role: {goal_role}. Target skills: {', '.join(target_skills)}. Current skills: {', '.join(user_skills)}"
+    goal_role = profile.goal_role
+
+    # Create detailed skill context including expertise levels
+    current_skills_context = ", ".join([f"{skill.name} ({skill.expertise})" for skill in profile.current_skills])
+    query_text = f"Goal role: {goal_role}. Current skills: {current_skills_context}. Looking for courses to advance toward {goal_role} role."
 
     # Initialize cross-encoder model
     cross_encoder = _get_cross_encoder()
@@ -233,25 +275,32 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
         top_courses = _rerank_with_cross_encoder(query_text, retrieved, cross_encoder, top_k)
         reranking_method = "cross-encoder"
     else:
-        # Fallback to original overlap scoring method
+        # Fallback to simple scoring based on user skills and goal role relevance
         scored: List[Tuple[Course, float]] = []
         for c in retrieved:
-            scored.append((c, _overlap_score(c, target_skills)))
+            # Score based on how many user skills the course builds upon
+            skill_overlap = len(set(skill.name.lower() for skill in profile.current_skills) & set(skill.lower() for skill in c.skills))
+            # Simple scoring: courses that build on existing skills get higher scores
+            score = skill_overlap / max(len(profile.current_skills), 1) if profile.current_skills else 0.5
+            scored.append((c, score))
         scored.sort(key=lambda x: x[1], reverse=True)
-        top_courses = [c for c, s in scored[:top_k] if s > 0.0] or (retrieved[:top_k] if retrieved else [])
-        reranking_method = "overlap-scoring"
+        top_courses = [c for c, s in scored[:top_k]] or (retrieved[:top_k] if retrieved else [])
+        reranking_method = "skill-overlap-scoring"
 
-    # Build initial gap map as fallback
-    fallback_gap_map = _build_gap_map(user_skills, target_skills)
+    # Build initial gap map as fallback - simplified since we don't have explicit target skills
+    fallback_gap_map = {goal_role: ["Skills needed for this role will be identified through course recommendations"]}
 
     # Prioritize LLM-generated plan with enhanced context
-    years_experience = getattr(profile, 'years_experience', None)
+    years_experience = profile.years_experience
+
+    # Convert current skills to dict format for LLM
+    current_skills_dict = [{"name": skill.name, "expertise": skill.expertise} for skill in profile.current_skills]
+
     llm_result = await _make_plan_llm(
-        list(user_skills),
-        list(target_skills),
+        current_skills_dict,
+        goal_role,
         top_courses,
-        years_experience=years_experience,
-        goal_role=goal_role
+        years_experience=years_experience
     )
 
     if llm_result and isinstance(llm_result, dict):
@@ -270,7 +319,7 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
         # Fallback to heuristic method
         plan = await _make_plan_heuristic(fallback_gap_map.keys(), top_courses)
         gap_map = fallback_gap_map
-        notes = f"Plan generated via heuristic with {reranking_method} re-ranking; consider configuring LLM (OpenAI API key) for richer guidance."
+        notes = f"Plan generated via heuristic with {reranking_method} re-ranking; consider configuring OpenRouter API key for richer guidance."
         logger.info("Using heuristic fallback plan")
 
     logger.info(
