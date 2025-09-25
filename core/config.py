@@ -47,8 +47,8 @@ class Settings(BaseModel):
     cross_encoder_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
     use_cross_encoder: bool = True
 
-    # Model cache directory
-    transformers_cache: str = "./models_cache"
+    # Model cache directory (using HF_HOME instead of deprecated TRANSFORMERS_CACHE)
+    hf_home: str = "./models_cache"
 
     # Performance settings
     max_workers: int = 4
@@ -86,7 +86,7 @@ def get_settings() -> Settings:
         use_local_llm=os.getenv("USE_LOCAL_LLM", "true").lower() == "true",
         cross_encoder_model=os.getenv("CROSS_ENCODER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2"),
         use_cross_encoder=os.getenv("USE_CROSS_ENCODER", "true").lower() == "true",
-        transformers_cache=os.getenv("TRANSFORMERS_CACHE", "./models_cache"),
+        hf_home=os.getenv("HF_HOME", "./models_cache"),
         max_workers=int(os.getenv("MAX_WORKERS", "4")),
         batch_size=int(os.getenv("BATCH_SIZE", "32")),
         max_sequence_length=int(os.getenv("MAX_SEQUENCE_LENGTH", "512")),
