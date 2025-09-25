@@ -1,282 +1,274 @@
 [
   {
-    "course_id": "ds-python-fundamentals",
-    "title": "Python for Data Science Fundamentals",
-    "skills": ["Python", "Data Analysis", "Pandas", "NumPy"],
-    "difficulty": "Beginner",
+    "course_id": "python-data-science-001",
+    "title": "Python for Data Science",
+    "skills": [
+      "python",
+      "data analysis",
+      "pandas",
+      "numpy",
+      "matplotlib",
+      "data science"
+    ],
+    "difficulty": "beginner",
     "duration_weeks": 6,
-    "provider": "DataCamp",
-    "url": "https://datacamp.com/courses/python-fundamentals",
+    "provider": "Coursera",
+    "url": "https://coursera.org/python-data-science",
     "metadata": {
-      "prerequisites": [],
-      "certification": true,
-      "hands_on_projects": 3
+      "description": "Learn Python programming for data analysis and machine learning",
+      "price": "$49",
+      "rating": 4.5,
+      "enrollment_count": 15000
     }
   },
   {
-    "course_id": "ml-supervised-learning",
-    "title": "Machine Learning: Supervised Learning",
-    "skills": ["Machine Learning", "Scikit-learn", "Python", "Statistics"],
-    "difficulty": "Intermediate",
+    "course_id": "intro-python-data-science-002",
+    "title": "Introduction to Python for Data Science",
+    "skills": [
+      "python",
+      "data science",
+      "programming fundamentals",
+      "data analysis"
+    ],
+    "difficulty": "beginner",
+    "duration_weeks": 6,
+    "provider": "edX",
+    "url": "https://edx.org/intro-python-data-science",
+    "metadata": {
+      "description": "Python programming fundamentals for data science applications",
+      "price": "Free",
+      "rating": 4.2,
+      "enrollment_count": 8500
+    }
+  },
+  {
+    "course_id": "machine-learning-basics-003",
+    "title": "Machine Learning Fundamentals",
+    "skills": [
+      "machine learning",
+      "algorithms",
+      "supervised learning",
+      "unsupervised learning",
+      "python"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 8,
+    "provider": "Udemy",
+    "url": "https://udemy.com/machine-learning-fundamentals",
+    "metadata": {
+      "description": "Comprehensive introduction to machine learning concepts and algorithms",
+      "price": "$89",
+      "rating": 4.7,
+      "enrollment_count": 25000
+    }
+  },
+  {
+    "course_id": "web-development-fullstack-004",
+    "title": "Full Stack Web Development",
+    "skills": [
+      "javascript",
+      "react",
+      "node.js",
+      "html",
+      "css",
+      "mongodb",
+      "web development"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 12,
+    "provider": "freeCodeCamp",
+    "url": "https://freecodecamp.org/fullstack-web-development",
+    "metadata": {
+      "description": "Complete full stack web development course covering frontend and backend technologies",
+      "price": "Free",
+      "rating": 4.6,
+      "enrollment_count": 50000
+    }
+  },
+  {
+    "course_id": "data-scientist-career-005",
+    "title": "Data Scientist Career Track",
+    "skills": [
+      "data scientist",
+      "statistics",
+      "machine learning",
+      "python",
+      "sql",
+      "data visualization"
+    ],
+    "difficulty": "advanced",
+    "duration_weeks": 16,
+    "provider": "DataCamp",
+    "url": "https://datacamp.com/data-scientist-career-track",
+    "metadata": {
+      "description": "Comprehensive career track to become a professional data scientist",
+      "price": "$299",
+      "rating": 4.8,
+      "enrollment_count": 12000
+    }
+  },
+  {
+    "course_id": "online-edx-0330",
+    "title": "Introduction to Programming",
+    "skills": [
+      "programming",
+      "problem solving",
+      "algorithms"
+    ],
+    "difficulty": "beginner",
+    "duration_weeks": 6,
+    "provider": "edX",
+    "url": null,
+    "metadata": {
+      "description": "Fundamental programming concepts and problem-solving skills",
+      "source": "Fallback",
+      "search_query": "public speaker",
+      "crawled_at": "2025-09-25T23:30:37.692462",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-2765",
+    "title": "Software Development Fundamentals",
+    "skills": [
+      "software development",
+      "programming",
+      "version control",
+      "testing"
+    ],
+    "difficulty": "intermediate",
     "duration_weeks": 8,
     "provider": "Coursera",
-    "url": "https://coursera.org/learn/machine-learning-supervised",
+    "url": null,
     "metadata": {
-      "prerequisites": ["Python", "Statistics"],
-      "certification": true,
-      "hands_on_projects": 5
+      "description": "Essential software development skills and practices",
+      "source": "Fallback",
+      "search_query": "public speaker",
+      "crawled_at": "2025-09-25T23:30:37.692519",
+      "auto_added": true
     }
   },
   {
-    "course_id": "react-frontend-dev",
-    "title": "Modern React Development",
-    "skills": ["React", "JavaScript", "Frontend Development", "JSX"],
-    "difficulty": "Intermediate",
-    "duration_weeks": 10,
+    "course_id": "public-speaking-masterclass-001",
+    "title": "Complete Public Speaking Masterclass",
+    "skills": [
+      "public speaking",
+      "communication",
+      "presentation skills",
+      "confidence building",
+      "storytelling"
+    ],
+    "difficulty": "beginner",
+    "duration_weeks": 8,
     "provider": "Udemy",
-    "url": "https://udemy.com/course/react-complete-guide",
+    "url": "https://udemy.com/public-speaking-masterclass",
     "metadata": {
-      "prerequisites": ["JavaScript", "HTML", "CSS"],
-      "certification": true,
-      "hands_on_projects": 8
+      "description": "Master the art of public speaking with confidence and charisma",
+      "price": "$79",
+      "rating": 4.6,
+      "enrollment_count": 18000
     }
   },
   {
-    "course_id": "nodejs-backend-api",
-    "title": "Node.js Backend API Development",
-    "skills": ["Node.js", "Express.js", "Backend Development", "REST API"],
-    "difficulty": "Intermediate",
-    "duration_weeks": 12,
-    "provider": "Pluralsight",
-    "url": "https://pluralsight.com/courses/nodejs-backend-development",
-    "metadata": {
-      "prerequisites": ["JavaScript"],
-      "certification": true,
-      "hands_on_projects": 6
-    }
-  },
-  {
-    "course_id": "aws-cloud-practitioner",
-    "title": "AWS Cloud Practitioner Essentials",
-    "skills": ["AWS", "Cloud Computing", "DevOps", "Infrastructure"],
-    "difficulty": "Beginner",
+    "course_id": "effective-communication-002",
+    "title": "Effective Communication Skills",
+    "skills": [
+      "communication",
+      "interpersonal skills",
+      "active listening",
+      "verbal communication"
+    ],
+    "difficulty": "beginner",
     "duration_weeks": 4,
-    "provider": "AWS Training",
-    "url": "https://aws.amazon.com/training/cloud-practitioner",
+    "provider": "Coursera",
+    "url": "https://coursera.org/effective-communication",
     "metadata": {
-      "prerequisites": [],
-      "certification": true,
-      "official_certification": "AWS Certified Cloud Practitioner"
+      "description": "Build strong communication skills for personal and professional success",
+      "price": "Free",
+      "rating": 4.4,
+      "enrollment_count": 12000
     }
   },
   {
-    "course_id": "docker-containerization",
-    "title": "Docker and Containerization Mastery",
-    "skills": ["Docker", "Containerization", "DevOps", "Kubernetes"],
-    "difficulty": "Intermediate",
+    "course_id": "presentation-skills-advanced-003",
+    "title": "Advanced Presentation Skills",
+    "skills": [
+      "presentation skills",
+      "public speaking",
+      "visual communication",
+      "audience engagement"
+    ],
+    "difficulty": "intermediate",
     "duration_weeks": 6,
-    "provider": "Linux Academy",
-    "url": "https://linuxacademy.com/course/docker-mastery",
+    "provider": "LinkedIn Learning",
+    "url": "https://linkedin.com/learning/presentation-skills",
     "metadata": {
-      "prerequisites": ["Linux", "Command Line"],
-      "certification": false,
-      "hands_on_projects": 10
+      "description": "Advanced techniques for engaging presentations and public speaking",
+      "price": "$29/month",
+      "rating": 4.5,
+      "enrollment_count": 8500
     }
   },
   {
-    "course_id": "sql-database-design",
-    "title": "SQL and Database Design",
-    "skills": ["SQL", "Database Design", "PostgreSQL", "Data Modeling"],
-    "difficulty": "Beginner",
-    "duration_weeks": 8,
+    "course_id": "storytelling-impact-004",
+    "title": "Storytelling for Impact",
+    "skills": [
+      "storytelling",
+      "narrative techniques",
+      "persuasive communication",
+      "content creation"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 5,
+    "provider": "MasterClass",
+    "url": "https://masterclass.com/storytelling",
+    "metadata": {
+      "description": "Learn to craft compelling stories that engage and persuade audiences",
+      "price": "$180/year",
+      "rating": 4.7,
+      "enrollment_count": 6000
+    }
+  },
+  {
+    "course_id": "online-linkedin learning-2689",
+    "title": "Professional Communication and Speaking",
+    "skills": [
+      "professional communication",
+      "public speaking",
+      "business communication",
+      "leadership communication"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 10,
+    "provider": "LinkedIn Learning",
+    "url": null,
+    "metadata": {
+      "description": "Develop professional communication and public speaking skills for career advancement",
+      "source": "Fallback",
+      "search_query": "public speaker",
+      "crawled_at": "2025-09-25T23:36:52.395732",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-edx-4860",
+    "title": "Business Communication Essentials",
+    "skills": [
+      "business communication",
+      "professional writing",
+      "presentation skills",
+      "meeting facilitation"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 6,
     "provider": "edX",
-    "url": "https://edx.org/course/sql-database-design",
+    "url": null,
     "metadata": {
-      "prerequisites": [],
-      "certification": true,
-      "hands_on_projects": 4
-    }
-  },
-  {
-    "course_id": "advanced-ml-deep-learning",
-    "title": "Advanced Machine Learning: Deep Learning",
-    "skills": ["Deep Learning", "TensorFlow", "Neural Networks", "Python"],
-    "difficulty": "Advanced",
-    "duration_weeks": 16,
-    "provider": "Stanford Online",
-    "url": "https://online.stanford.edu/courses/deep-learning",
-    "metadata": {
-      "prerequisites": ["Machine Learning", "Python", "Linear Algebra"],
-      "certification": true,
-      "hands_on_projects": 12
-    }
-  },
-  {
-    "course_id": "ui-ux-design-principles",
-    "title": "UI/UX Design Principles and Prototyping",
-    "skills": ["UI Design", "UX Design", "Figma", "User Research"],
-    "difficulty": "Beginner",
-    "duration_weeks": 10,
-    "provider": "Google UX Design",
-    "url": "https://coursera.org/professional-certificates/google-ux-design",
-    "metadata": {
-      "prerequisites": [],
-      "certification": true,
-      "hands_on_projects": 7
-    }
-  },
-  {
-    "course_id": "cybersecurity-fundamentals",
-    "title": "Cybersecurity Fundamentals",
-    "skills": ["Cybersecurity", "Network Security", "Risk Assessment", "Compliance"],
-    "difficulty": "Beginner",
-    "duration_weeks": 12,
-    "provider": "CompTIA",
-    "url": "https://comptia.org/certifications/security",
-    "metadata": {
-      "prerequisites": [],
-      "certification": true,
-      "official_certification": "CompTIA Security+"
-    }
-  },
-  {
-    "course_id": "agile-scrum-management",
-    "title": "Agile and Scrum Project Management",
-    "skills": ["Agile", "Scrum", "Project Management", "Team Leadership"],
-    "difficulty": "Intermediate",
-    "duration_weeks": 6,
-    "provider": "Scrum Alliance",
-    "url": "https://scrumalliance.org/get-certified/scrum-master-track",
-    "metadata": {
-      "prerequisites": ["Basic Project Management"],
-      "certification": true,
-      "official_certification": "Certified ScrumMaster"
-    }
-  },
-  {
-    "course_id": "data-visualization-tableau",
-    "title": "Data Visualization with Tableau",
-    "skills": ["Tableau", "Data Visualization", "Business Intelligence", "Analytics"],
-    "difficulty": "Intermediate",
-    "duration_weeks": 8,
-    "provider": "Tableau Learning",
-    "url": "https://tableau.com/learn/training",
-    "metadata": {
-      "prerequisites": ["Basic Data Analysis"],
-      "certification": true,
-      "hands_on_projects": 6
-    }
-  },
-  {
-    "course_id": "blockchain-development",
-    "title": "Blockchain Development with Solidity",
-    "skills": ["Blockchain", "Solidity", "Smart Contracts", "Ethereum"],
-    "difficulty": "Advanced",
-    "duration_weeks": 14,
-    "provider": "ConsenSys Academy",
-    "url": "https://consensys.net/academy/blockchain-developer-bootcamp",
-    "metadata": {
-      "prerequisites": ["Programming", "JavaScript"],
-      "certification": true,
-      "hands_on_projects": 8
-    }
-  },
-  {
-    "course_id": "mobile-app-flutter",
-    "title": "Mobile App Development with Flutter",
-    "skills": ["Flutter", "Dart", "Mobile Development", "Cross-platform"],
-    "difficulty": "Intermediate",
-    "duration_weeks": 12,
-    "provider": "Google Developers",
-    "url": "https://developers.google.com/learn/flutter",
-    "metadata": {
-      "prerequisites": ["Programming Basics"],
-      "certification": false,
-      "hands_on_projects": 10
-    }
-  },
-  {
-    "course_id": "devops-ci-cd",
-    "title": "DevOps: CI/CD Pipeline Implementation",
-    "skills": ["DevOps", "CI/CD", "Jenkins", "Git", "Automation"],
-    "difficulty": "Advanced",
-    "duration_weeks": 10,
-    "provider": "Jenkins Academy",
-    "url": "https://jenkins.io/doc/tutorials",
-    "metadata": {
-      "prerequisites": ["Git", "Linux", "Scripting"],
-      "certification": false,
-      "hands_on_projects": 8
-    }
-  },
-  {
-    "course_id": "product-management-strategy",
-    "title": "Product Management and Strategy",
-    "skills": ["Product Management", "Strategy", "Market Research", "Analytics"],
-    "difficulty": "Intermediate",
-    "duration_weeks": 8,
-    "provider": "Product School",
-    "url": "https://productschool.com/product-management-certification",
-    "metadata": {
-      "prerequisites": ["Business Fundamentals"],
-      "certification": true,
-      "hands_on_projects": 4
-    }
-  },
-  {
-    "course_id": "kubernetes-orchestration",
-    "title": "Kubernetes Container Orchestration",
-    "skills": ["Kubernetes", "Container Orchestration", "DevOps", "Microservices"],
-    "difficulty": "Advanced",
-    "duration_weeks": 8,
-    "provider": "CNCF",
-    "url": "https://kubernetes.io/training",
-    "metadata": {
-      "prerequisites": ["Docker", "Linux", "Networking"],
-      "certification": true,
-      "official_certification": "Certified Kubernetes Administrator"
-    }
-  },
-  {
-    "course_id": "digital-marketing-analytics",
-    "title": "Digital Marketing and Analytics",
-    "skills": ["Digital Marketing", "Google Analytics", "SEO", "Social Media Marketing"],
-    "difficulty": "Beginner",
-    "duration_weeks": 6,
-    "provider": "Google Digital Marketing",
-    "url": "https://learndigital.withgoogle.com/digitalmarketing",
-    "metadata": {
-      "prerequisites": [],
-      "certification": true,
-      "hands_on_projects": 5
-    }
-  },
-  {
-    "course_id": "microservices-architecture",
-    "title": "Microservices Architecture Design",
-    "skills": ["Microservices", "System Design", "API Design", "Distributed Systems"],
-    "difficulty": "Advanced",
-    "duration_weeks": 12,
-    "provider": "Microservices.io",
-    "url": "https://microservices.io/patterns",
-    "metadata": {
-      "prerequisites": ["Backend Development", "System Design"],
-      "certification": false,
-      "hands_on_projects": 6
-    }
-  },
-  {
-    "course_id": "business-intelligence-powerbi",
-    "title": "Business Intelligence with Power BI",
-    "skills": ["Power BI", "Business Intelligence", "Data Analysis", "DAX"],
-    "difficulty": "Intermediate",
-    "duration_weeks": 6,
-    "provider": "Microsoft Learn",
-    "url": "https://docs.microsoft.com/learn/powerbi",
-    "metadata": {
-      "prerequisites": ["Basic Data Analysis"],
-      "certification": true,
-      "official_certification": "Microsoft Certified: Data Analyst Associate"
+      "description": "Essential business communication skills for the modern workplace",
+      "source": "Fallback",
+      "search_query": "public speaker",
+      "crawled_at": "2025-09-25T23:36:52.395869",
+      "auto_added": true
     }
   }
 ]
