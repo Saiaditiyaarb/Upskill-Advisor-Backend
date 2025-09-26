@@ -7,6 +7,9 @@ from typing import List, Dict, Any, Optional
 from urllib.parse import urljoin, quote
 import time
 import random
+import asyncio
+import aiohttp
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = logging.getLogger(__name__)
 
@@ -83,34 +86,16 @@ def _estimate_duration(text: str) -> int:
     return 4  # Default duration
 
 
-def crawl_courses(query: str = None, max_courses: int = 10) -> List[Dict[str, Any]]:
-    """
-    Enhanced course crawler that searches for courses based on query and extracts detailed information.
-
-    Args:
-        query: Search query for courses (e.g., "python", "data science", "machine learning")
-        max_courses: Maximum number of courses to return
-
-    Returns:
-        List of course dictionaries with enhanced metadata
-    """
+def _crawl_coursera(query: str, max_courses: int) -> List[Dict[str, Any]]:
+    """Crawl Coursera courses for the given query."""
     courses = []
-
-    if not query:
-        query = "programming"  # Default query
-
-    # Add random delay to avoid being blocked
-    def random_delay():
-        time.sleep(random.uniform(0.5, 1.5))
-
-    # Enhanced Coursera scraping
     try:
         logger.info(f"Searching Coursera for: {query}")
         encoded_query = quote(query)
         url = f"https://www.coursera.org/search?query={encoded_query}"
 
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         }
 
         response = requests.get(url, headers=headers, timeout=10)
@@ -118,12 +103,10 @@ def crawl_courses(query: str = None, max_courses: int = 10) -> List[Dict[str, An
 
         soup = BeautifulSoup(response.content, "html.parser")
 
-        # Try multiple selectors for course cards
+        # Correct selectors based on actual HTML structure
         course_selectors = [
-            "div[data-testid='search-result-card']",
-            "div.cds-9",
-            "div.rc-SearchCard",
-            "div[class*='search-result']"
+            "div.cds-CommonCard-clickArea",
+            "div[class*='cds-CommonCard-clickArea']"
         ]
 
         course_cards = []
@@ -134,36 +117,35 @@ def crawl_courses(query: str = None, max_courses: int = 10) -> List[Dict[str, An
 
         logger.info(f"Found {len(course_cards)} Coursera course cards")
 
-        for i, card in enumerate(course_cards[:max_courses//2]):
-            try:
-                # Extract title
-                title_selectors = ["h2", "h3", "[data-testid='search-result-title']", ".cds-119"]
-                title = None
-                for selector in title_selectors:
-                    title_elem = card.select_one(selector)
-                    if title_elem:
-                        title = title_elem.get_text(strip=True)
-                        break
+        # Debug: Log the first few cards for inspection
+        if course_cards:
+            logger.debug(f"First card HTML preview: {str(course_cards[0])[:200]}...")
 
-                if not title:
+        for i, card in enumerate(course_cards[:max_courses]):
+            try:
+                # Extract title from the correct structure
+                title_elem = card.select_one("h3.cds-CommonCard-title")
+                if not title_elem:
                     continue
 
-                # Extract description
-                desc_selectors = ["p", ".cds-119", "[data-testid='search-result-description']"]
-                description = ""
-                for selector in desc_selectors:
-                    desc_elem = card.select_one(selector)
-                    if desc_elem:
-                        description = desc_elem.get_text(strip=True)
-                        break
+                title = title_elem.get_text(strip=True)
+                if not title or len(title) <= 5:
+                    continue
 
-                # Extract URL
+                # Extract description from the body content
+                desc_elem = card.select_one("div.cds-CommonCard-bodyContent")
+                description = desc_elem.get_text(strip=True) if desc_elem else ""
+
+                # Extract URL from the main link
                 link_elem = card.select_one("a[href]")
                 course_url = None
                 if link_elem:
                     href = link_elem.get('href')
-                    if href:
-                        course_url = urljoin("https://www.coursera.org", href)
+                    if href and ('/learn/' in href or '/specializations/' in href or '/professional-certificates/' in href):
+                        if href.startswith('http'):
+                            course_url = href
+                        else:
+                            course_url = urljoin("https://www.coursera.org", href)
 
                 # Extract skills and metadata
                 full_text = f"{title} {description}"
@@ -190,32 +172,55 @@ def crawl_courses(query: str = None, max_courses: int = 10) -> List[Dict[str, An
                 logger.warning(f"Error processing Coursera course card {i}: {e}")
                 continue
 
-        random_delay()
-
     except Exception as e:
         logger.error(f"Error crawling Coursera: {e}")
 
-    # Enhanced Udemy scraping
+    return courses
+
+
+def _crawl_udemy(query: str, max_courses: int) -> List[Dict[str, Any]]:
+    """Crawl Udemy courses for the given query."""
+    courses = []
     try:
         logger.info(f"Searching Udemy for: {query}")
         encoded_query = quote(query)
         url = f"https://www.udemy.com/courses/search/?q={encoded_query}"
 
+        # Enhanced headers to avoid 403 Forbidden
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Cache-Control': 'max-age=0'
         }
 
-        response = requests.get(url, headers=headers, timeout=10)
+        # Add session for better request handling
+        session = requests.Session()
+        session.headers.update(headers)
+
+        # Add longer delay before Udemy request
+        time.sleep(random.uniform(0.5, 1.0))
+
+        response = session.get(url, timeout=15)
         response.raise_for_status()
 
         soup = BeautifulSoup(response.content, "html.parser")
 
-        # Try multiple selectors for course cards
+        # More specific selectors for Udemy course cards
         course_selectors = [
-            "div[data-testid='course-card']",
-            "div.course-card--main-content--3xT-S",
-            "div[class*='course-card']",
-            "div.ud-search-form-autocomplete-suggestion-item"
+            "div[data-purpose='course-card-wrapper']",
+            "div[data-purpose='course-card']",
+            "div.course-card--container--1QM2W",
+            "div[class*='course-card--container']",
+            "div.course-list--container--FP33M div[data-purpose='course-card']"
         ]
 
         course_cards = []
@@ -226,7 +231,7 @@ def crawl_courses(query: str = None, max_courses: int = 10) -> List[Dict[str, An
 
         logger.info(f"Found {len(course_cards)} Udemy course cards")
 
-        for i, card in enumerate(course_cards[:max_courses//2]):
+        for i, card in enumerate(course_cards[:max_courses]):
             try:
                 # Extract title
                 title_selectors = ["h3", "h2", ".ud-heading-md", "[data-testid='course-title']"]
@@ -249,13 +254,23 @@ def crawl_courses(query: str = None, max_courses: int = 10) -> List[Dict[str, An
                         description = desc_elem.get_text(strip=True)
                         break
 
-                # Extract URL
-                link_elem = card.select_one("a[href]")
+                # Extract URL with improved selectors
+                link_selectors = [
+                    "a[href*='/course/']",
+                    "a[data-testid='course-title']",
+                    "h3 a", "h2 a", "a[href]"
+                ]
                 course_url = None
-                if link_elem:
-                    href = link_elem.get('href')
-                    if href:
-                        course_url = urljoin("https://www.udemy.com", href)
+                for selector in link_selectors:
+                    link_elem = card.select_one(selector)
+                    if link_elem:
+                        href = link_elem.get('href')
+                        if href:
+                            if href.startswith('http'):
+                                course_url = href
+                            else:
+                                course_url = urljoin("https://www.udemy.com", href)
+                            break
 
                 # Extract skills and metadata
                 full_text = f"{title} {description}"
@@ -282,19 +297,29 @@ def crawl_courses(query: str = None, max_courses: int = 10) -> List[Dict[str, An
                 logger.warning(f"Error processing Udemy course card {i}: {e}")
                 continue
 
-        random_delay()
-
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 403:
+            logger.warning(f"Udemy blocked request (403 Forbidden). Skipping Udemy for this search.")
+        else:
+            logger.error(f"HTTP error crawling Udemy: {e}")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Network error crawling Udemy: {e}")
     except Exception as e:
-        logger.error(f"Error crawling Udemy: {e}")
+        logger.error(f"Unexpected error crawling Udemy: {e}")
 
-    # Add edX scraping
+    return courses
+
+
+def _crawl_edx(query: str, max_courses: int) -> List[Dict[str, Any]]:
+    """Crawl edX courses for the given query."""
+    courses = []
     try:
         logger.info(f"Searching edX for: {query}")
         encoded_query = quote(query)
         url = f"https://www.edx.org/search?q={encoded_query}"
 
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         }
 
         response = requests.get(url, headers=headers, timeout=10)
@@ -302,11 +327,17 @@ def crawl_courses(query: str = None, max_courses: int = 10) -> List[Dict[str, An
 
         soup = BeautifulSoup(response.content, "html.parser")
 
-        # Try multiple selectors for course cards
+        # Enhanced selectors for course cards
         course_selectors = [
             "div[data-testid='discovery-card']",
             "div.discovery-card",
-            "div[class*='course-card']"
+            "div[class*='course-card']",
+            "div[class*='CourseCard']",
+            "div.course-item",
+            "article[class*='course']",
+            "div[class*='search-result']",
+            "div.course-listing-item",
+            "div[data-testid='course-item']"
         ]
 
         course_cards = []
@@ -317,7 +348,7 @@ def crawl_courses(query: str = None, max_courses: int = 10) -> List[Dict[str, An
 
         logger.info(f"Found {len(course_cards)} edX course cards")
 
-        for i, card in enumerate(course_cards[:max_courses//3]):
+        for i, card in enumerate(course_cards[:max_courses]):
             try:
                 # Extract title
                 title_selectors = ["h3", "h2", "[data-testid='discovery-card-title']"]
@@ -340,13 +371,24 @@ def crawl_courses(query: str = None, max_courses: int = 10) -> List[Dict[str, An
                         description = desc_elem.get_text(strip=True)
                         break
 
-                # Extract URL
-                link_elem = card.select_one("a[href]")
+                # Extract URL with improved selectors
+                link_selectors = [
+                    "a[href*='/course/']",
+                    "a[href*='/learn/']",
+                    "a[data-testid='discovery-card-title']",
+                    "h3 a", "h2 a", "a[href]"
+                ]
                 course_url = None
-                if link_elem:
-                    href = link_elem.get('href')
-                    if href:
-                        course_url = urljoin("https://www.edx.org", href)
+                for selector in link_selectors:
+                    link_elem = card.select_one(selector)
+                    if link_elem:
+                        href = link_elem.get('href')
+                        if href:
+                            if href.startswith('http'):
+                                course_url = href
+                            else:
+                                course_url = urljoin("https://www.edx.org", href)
+                            break
 
                 # Extract skills and metadata
                 full_text = f"{title} {description}"
@@ -376,15 +418,54 @@ def crawl_courses(query: str = None, max_courses: int = 10) -> List[Dict[str, An
     except Exception as e:
         logger.error(f"Error crawling edX: {e}")
 
-    # If we didn't get enough quality courses from scraping, add fallback courses
-    quality_courses = [c for c in courses if c.get('title') and len(c.get('title', '')) > 5 and c.get('skills')]
+    return courses
 
-    if len(quality_courses) < max_courses // 2:
-        fallback_courses = _get_fallback_courses(query, max_courses - len(quality_courses))
-        courses = quality_courses + fallback_courses
 
-    logger.info(f"Total courses crawled: {len(courses)}")
-    return courses[:max_courses]
+def crawl_courses(query: str = None, max_courses: int = 10) -> List[Dict[str, Any]]:
+    """
+    Enhanced course crawler that searches for courses based on query and extracts detailed information.
+    Now uses concurrent execution for improved performance.
+
+    Args:
+        query: Search query for courses (e.g., "python", "data science", "machine learning")
+        max_courses: Maximum number of courses to return
+
+    Returns:
+        List of course dictionaries with enhanced metadata
+    """
+    if not query:
+        query = "programming"  # Default query
+
+    # Calculate courses per provider
+    courses_per_provider = max(max_courses // 3, 2)
+
+    # Use ThreadPoolExecutor for concurrent crawling
+    all_courses = []
+
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        # Submit all crawling tasks concurrently
+        future_to_provider = {
+            executor.submit(_crawl_coursera, query, courses_per_provider): "Coursera",
+            executor.submit(_crawl_udemy, query, courses_per_provider): "Udemy",
+            executor.submit(_crawl_edx, query, courses_per_provider): "edX"
+        }
+
+        # Collect results as they complete
+        for future in as_completed(future_to_provider):
+            provider = future_to_provider[future]
+            try:
+                provider_courses = future.result()
+                all_courses.extend(provider_courses)
+                logger.debug(f"Completed crawling {provider}: {len(provider_courses)} courses")
+            except Exception as e:
+                logger.error(f"Error in {provider} crawling thread: {e}")
+                continue
+
+    # Filter and return only quality courses (no fallback generation)
+    quality_courses = [c for c in all_courses if c.get('title') and len(c.get('title', '')) > 5]
+
+    logger.info(f"Total courses crawled: {len(quality_courses)}")
+    return quality_courses[:max_courses]
 
 
 def _get_fallback_courses(query: str, max_courses: int) -> List[Dict[str, Any]]:
