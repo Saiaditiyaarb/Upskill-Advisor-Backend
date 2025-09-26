@@ -185,8 +185,9 @@ GUIDELINES:
 
 Generate the learning plan:"""
 
-        # Prepare course information with more detail
+        # Prepare course information with more detail and priority indicators
         course_info = []
+        online_course_count = 0
         for c in courses:
             course_detail = (
                 f"ID: {c.course_id}, Title: {c.title}, "
@@ -196,7 +197,16 @@ Generate the learning plan:"""
             )
             if c.provider:
                 course_detail += f", Provider: {c.provider}"
+
+            # Mark freshly crawled courses
+            if c.metadata and c.metadata.get('freshly_crawled'):
+                course_detail += " [FRESH ONLINE COURSE - PRIORITIZE]"
+                online_course_count += 1
+
             course_info.append(course_detail)
+
+        # Add note about online courses in the prompt
+        online_note = f"\n\nIMPORTANT: {online_course_count} courses marked as [FRESH ONLINE COURSE - PRIORITIZE] are newly discovered and should be given preference in your recommendations as they represent the most current learning opportunities." if online_course_count > 0 else ""
 
         # Format the prompt with actual values
         current_skills_text = ", ".join([f"{skill['name']} ({skill['expertise']})" for skill in current_skills]) if current_skills else "None specified"
@@ -206,7 +216,7 @@ Generate the learning plan:"""
             years_experience=str(years_experience) if years_experience is not None else "Not specified",
             goal_role=goal_role,
             courses="\n".join(course_info) if course_info else "No specific courses available"
-        )
+        ) + online_note
 
         # Generate response using OpenRouter
         from langchain_core.messages import HumanMessage
@@ -286,8 +296,50 @@ Generate the learning plan:"""
             logger.warning(f"Failed to parse JSON from OpenRouter response. Response preview: {response_text[:200]}...")
             return None
 
-        # Validate the result structure
-        if isinstance(result, dict) and "plan" in result:
+        # Enhanced validation of the result structure
+        if isinstance(result, dict):
+            # Check for required fields and fix common issues
+            if "plan" not in result:
+                # Try to extract plan from common variations
+                if "learning_plan" in result:
+                    result["plan"] = result["learning_plan"]
+                elif "courses" in result:
+                    result["plan"] = result["courses"]
+                elif "recommendations" in result:
+                    result["plan"] = result["recommendations"]
+                else:
+                    # Create a minimal plan structure
+                    result["plan"] = []
+
+            # Ensure plan is a list
+            if not isinstance(result.get("plan"), list):
+                result["plan"] = []
+
+            # Add missing fields with defaults
+            if "gap_map" not in result:
+                result["gap_map"] = {goal_role: ["Skills will be identified through course analysis"]}
+
+            if "timeline" not in result:
+                result["timeline"] = {"total_weeks": len(result["plan"]) * 4 if result["plan"] else 8}
+
+            if "notes" not in result:
+                result["notes"] = "Learning plan generated successfully"
+
+            # Validate and fix plan structure
+            valid_plan = []
+            for i, step in enumerate(result["plan"]):
+                if isinstance(step, dict):
+                    # Ensure required fields exist
+                    fixed_step = {
+                        "course_id": step.get("course_id", f"unknown-{i}"),
+                        "why": step.get("why", step.get("reason", "Recommended for skill development")),
+                        "order": step.get("order", i + 1),
+                        "estimated_weeks": step.get("estimated_weeks", step.get("duration", 4))
+                    }
+                    valid_plan.append(fixed_step)
+
+            result["plan"] = valid_plan
+
             logger.info("OpenRouter LLM plan generation successful")
             return result
         else:
@@ -297,6 +349,111 @@ Generate the learning plan:"""
     except Exception as e:
         logger.warning(f"OpenRouter LLM plan generation failed: {e}")
         return None
+
+
+async def _remove_duplicates_from_json(courses_file: str = "courses.json") -> bool:
+    """
+    Remove duplicate courses from the courses.json file based on title, URL, and course_id.
+
+    Args:
+        courses_file: Path to the courses JSON file
+
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        def _deduplicate_file():
+            courses_path = Path(courses_file)
+
+            if not courses_path.exists():
+                logger.info(f"Courses file {courses_file} does not exist, nothing to deduplicate")
+                return True
+
+            # Load existing courses
+            try:
+                with open(courses_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+
+                if isinstance(data, list):
+                    existing_courses = data
+                elif isinstance(data, dict) and 'courses' in data:
+                    existing_courses = data['courses']
+                else:
+                    logger.warning(f"Unexpected JSON structure in {courses_file}")
+                    return False
+
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid JSON in {courses_file}: {e}")
+                return False
+
+            original_count = len(existing_courses)
+            logger.info(f"Starting deduplication of {original_count} courses")
+
+            # Track unique courses
+            seen_ids = set()
+            seen_titles = set()
+            seen_urls = set()
+            unique_courses = []
+            duplicates_removed = 0
+
+            for course in existing_courses:
+                if not isinstance(course, dict):
+                    continue
+
+                course_id = course.get('course_id', '')
+                title = course.get('title', '').lower().strip()
+                url = course.get('url', '').strip() if course.get('url') else None
+
+                # Check if this course is a duplicate
+                is_duplicate = (
+                    course_id in seen_ids or
+                    title in seen_titles or
+                    (url and url in seen_urls)
+                )
+
+                if is_duplicate:
+                    duplicates_removed += 1
+                    logger.debug(f"Removing duplicate: {course.get('title', 'Unknown')} (ID: {course_id})")
+                    continue
+
+                # Add to unique courses
+                unique_courses.append(course)
+                seen_ids.add(course_id)
+                seen_titles.add(title)
+                if url:
+                    seen_urls.add(url)
+
+            if duplicates_removed > 0:
+                # Create backup before modifying
+                backup_path = courses_path.with_suffix(f'.backup.dedup.{int(__import__("time").time())}.json')
+                try:
+                    import shutil
+                    shutil.copy2(courses_path, backup_path)
+                    logger.info(f"Created backup before deduplication: {backup_path}")
+                except Exception as e:
+                    logger.warning(f"Failed to create backup: {e}")
+
+                # Write deduplicated courses back to file
+                try:
+                    with open(courses_path, 'w', encoding='utf-8') as f:
+                        json.dump(unique_courses, f, indent=2, ensure_ascii=False)
+
+                    logger.info(f"Deduplication complete: removed {duplicates_removed} duplicates, {len(unique_courses)} unique courses remain")
+                    return True
+
+                except Exception as e:
+                    logger.error(f"Error writing deduplicated courses to {courses_file}: {e}")
+                    return False
+            else:
+                logger.info("No duplicates found, file is already clean")
+                return True
+
+        # Run deduplication in thread to avoid blocking
+        return await asyncio.to_thread(_deduplicate_file)
+
+    except Exception as e:
+        logger.error(f"Error in _remove_duplicates_from_json: {e}")
+        return False
 
 
 async def _add_courses_to_json(new_courses: List[Course], courses_file: str = "courses.json") -> bool:
@@ -337,23 +494,36 @@ async def _add_courses_to_json(new_courses: List[Course], courses_file: str = "c
                     logger.error(f"Error reading {courses_file}: {e}")
                     return False
 
-            # Get existing course IDs to avoid duplicates
+            # Get existing course IDs and titles to avoid duplicates
             existing_ids = set()
             existing_titles = set()
+            existing_urls = set()
 
             for course in existing_courses:
                 if isinstance(course, dict):
                     existing_ids.add(course.get('course_id', ''))
-                    existing_titles.add(course.get('title', '').lower())
+                    existing_titles.add(course.get('title', '').lower().strip())
+                    if course.get('url'):
+                        existing_urls.add(course.get('url').strip())
 
             # Convert new courses to dict format and filter duplicates
             new_course_dicts = []
             added_count = 0
 
             for course in new_courses:
-                # Skip if course already exists
-                if course.course_id in existing_ids or course.title.lower() in existing_titles:
-                    logger.debug(f"Skipping duplicate course: {course.title}")
+                # Enhanced duplicate detection
+                course_title_clean = course.title.lower().strip()
+                course_url_clean = course.url.strip() if course.url else None
+
+                # Check for duplicates by ID, title, or URL
+                is_duplicate = (
+                    course.course_id in existing_ids or
+                    course_title_clean in existing_titles or
+                    (course_url_clean and course_url_clean in existing_urls)
+                )
+
+                if is_duplicate:
+                    logger.debug(f"Skipping duplicate course: {course.title} (ID: {course.course_id})")
                     continue
 
                 # Convert Course object to dict
@@ -370,7 +540,9 @@ async def _add_courses_to_json(new_courses: List[Course], courses_file: str = "c
 
                 new_course_dicts.append(course_dict)
                 existing_ids.add(course.course_id)
-                existing_titles.add(course.title.lower())
+                existing_titles.add(course_title_clean)
+                if course_url_clean:
+                    existing_urls.add(course_url_clean)
                 added_count += 1
 
             if not new_course_dicts:
@@ -427,8 +599,16 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
         # This is a simplified approach - in practice, you might want to have a more sophisticated mapping
         target_skills = set()  # Will be populated based on goal role analysis
 
-        # Retrieve a larger set of initial candidates for re-ranking (5x the final top_k)
-        initial_candidates = max(top_k * 5, 25)  # Ensure we have enough candidates
+        # Optimize retrieval based on whether online search is enabled
+        search_online_requested = getattr(request, 'search_online', False)
+
+        if search_online_requested:
+            # For online search, get more candidates for better diversity
+            initial_candidates = max(top_k * 5, 25)
+        else:
+            # For offline-only, limit candidates for speed
+            initial_candidates = max(top_k * 2, 10)
+
         query = RetrievalQuery(skills=list(user_skills), target_skills=list(target_skills))
 
         try:
@@ -449,18 +629,24 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
 
         query_text = f"Goal role: {goal_role}. Current skills: {current_skills_context}. Looking for courses to advance toward {goal_role} role."
 
-        # Initialize cross-encoder model
-        cross_encoder = _get_cross_encoder()
-        reranking_method = "skill-overlap-scoring"
+        # Optimize cross-encoder usage based on search mode
+        if search_online_requested:
+            # For online search, use cross-encoder for better quality
+            cross_encoder = _get_cross_encoder()
+            reranking_method = "skill-overlap-scoring"
 
-        # Re-rank using cross-encoder if available, otherwise fall back to overlap scoring
-        if cross_encoder and retrieved:
-            try:
-                top_courses = _rerank_with_cross_encoder(query_text, retrieved, cross_encoder, top_k)
-                reranking_method = "cross-encoder"
-            except Exception as e:
-                logger.warning(f"Cross-encoder re-ranking failed, falling back to overlap scoring: {e}")
-                cross_encoder = None
+            # Re-rank using cross-encoder if available
+            if cross_encoder and retrieved:
+                try:
+                    top_courses = _rerank_with_cross_encoder(query_text, retrieved, cross_encoder, top_k)
+                    reranking_method = "cross-encoder"
+                except Exception as e:
+                    logger.warning(f"Cross-encoder re-ranking failed, falling back to overlap scoring: {e}")
+                    cross_encoder = None
+        else:
+            # For offline-only, skip cross-encoder for speed
+            cross_encoder = None
+            reranking_method = "fast-overlap-scoring"
 
         if not cross_encoder or not retrieved:
             # Fallback to enhanced scoring based on user skills and goal role relevance
@@ -519,14 +705,10 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
             scored.sort(key=lambda x: x[1], reverse=True)
             top_courses = [c for c, s in scored[:top_k]] or (retrieved[:top_k] if retrieved else [])
 
-        # Perform online search if requested or if local results are insufficient
+        # Perform online search only if explicitly requested
         online_courses = []
-        should_search_online = (
-            getattr(request, 'search_online', False) or
-            len(top_courses) < top_k or
-            not any(skill.lower() in [s.lower() for course in top_courses for s in course.skills]
-                   for skill in [goal_role.lower()] + [skill.name.lower() for skill in profile.current_skills or []])
-        )
+        # Only search online if explicitly requested - don't auto-trigger based on insufficient results
+        should_search_online = search_online_requested
 
         if should_search_online:
             try:
@@ -555,8 +737,14 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
                         if not title or title.lower() in existing_titles:
                             continue
 
-                        # Generate a more robust course ID
-                        course_id = f"online-{course_data.get('provider', 'unknown').lower()}-{abs(hash(title)) % 10000:04d}"
+                        # Generate a deterministic course ID based on content
+                        import hashlib
+                        provider = course_data.get('provider', 'unknown').lower()
+                        url = course_data.get('url', '')
+
+                        # Create a unique identifier based on title and URL
+                        content_hash = hashlib.md5(f"{title.lower().strip()}|{url}".encode('utf-8')).hexdigest()[:8]
+                        course_id = f"online-{provider}-{content_hash}"
 
                         # Skip if course ID already exists
                         if course_id in existing_course_ids:
@@ -596,38 +784,68 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
                     await _add_courses_to_json(new_courses_to_add)
                     logger.info(f"Added {len(new_courses_to_add)} new courses to courses.json")
 
+                    # Run deduplication to clean up any remaining duplicates
+                    dedup_success = await _remove_duplicates_from_json()
+                    if dedup_success:
+                        logger.debug("Post-addition deduplication completed successfully")
+                    else:
+                        logger.warning("Post-addition deduplication failed")
+
             except Exception as e:
                 logger.error(f"Online course search failed: {e}")
                 online_courses = []
 
-        # Combine and deduplicate course lists
-        all_courses = top_courses + online_courses
+        # Prioritize online courses and combine with local results
         final_courses = []
         seen_ids = set()
-        for course in all_courses:
+
+        # First, add online courses (freshest content)
+        for course in online_courses:
             if course.course_id not in seen_ids:
+                final_courses.append(course)
+                seen_ids.add(course.course_id)
+
+        # Then add local courses to fill remaining slots
+        for course in top_courses:
+            if course.course_id not in seen_ids and len(final_courses) < top_k:
                 final_courses.append(course)
                 seen_ids.add(course.course_id)
 
         top_courses = final_courses[:top_k]
 
+        logger.info(f"Final course selection: {len(online_courses)} online + {len(final_courses) - len(online_courses)} local = {len(final_courses)} total")
+
         fallback_gap_map = {goal_role: ["Skills needed for this role will be identified through course recommendations"]}
 
-        # Prioritize LLM-generated plan with enhanced context
+        # Optimize plan generation based on search mode
         years_experience = profile.years_experience
-
-        # Convert current skills to dict format for LLM
         current_skills_dict = [{"name": skill.name, "expertise": skill.expertise} for skill in profile.current_skills] if profile.current_skills else []
 
-        try:
-            llm_result = await _make_plan_llm(
-                current_skills_dict,
-                goal_role,
-                top_courses,
-                years_experience=years_experience
-            )
-        except Exception as e:
-            logger.warning(f"LLM plan generation failed: {e}")
+        if search_online_requested:
+            # For online search, use full LLM planning for better quality
+            try:
+                # Prioritize online courses in LLM planning
+                courses_for_planning = top_courses.copy()
+                if online_courses:
+                    # Add metadata to indicate which courses are freshly crawled
+                    for course in courses_for_planning:
+                        if course in online_courses:
+                            course.metadata = course.metadata or {}
+                            course.metadata['freshly_crawled'] = True
+                            course.metadata['priority'] = 'high'
+
+                llm_result = await _make_plan_llm(
+                    current_skills_dict,
+                    goal_role,
+                    courses_for_planning,
+                    years_experience=years_experience
+                )
+            except Exception as e:
+                logger.warning(f"LLM plan generation failed: {e}")
+                llm_result = None
+        else:
+            # For offline-only, skip LLM for speed and use heuristic directly
+            logger.debug("Skipping LLM plan generation for faster offline response")
             llm_result = None
 
         if llm_result and isinstance(llm_result, dict):
@@ -651,10 +869,13 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
                 plan = []
 
             gap_map = fallback_gap_map
-            notes = f"Plan generated via heuristic with {reranking_method} re-ranking; consider configuring OpenRouter API key for richer guidance."
+            if search_online_requested:
+                notes = f"Plan generated via heuristic with {reranking_method} re-ranking; consider configuring OpenRouter API key for richer guidance."
+            else:
+                notes = f"Fast plan generated with {reranking_method} for immediate response."
             logger.info("Using heuristic fallback plan")
 
-        if getattr(request, 'search_online', False):
+        if search_online_requested:
             notes += " Included results from an online search."
 
         logger.info(
