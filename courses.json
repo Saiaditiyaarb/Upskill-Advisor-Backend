@@ -270,5 +270,287 @@
       "crawled_at": "2025-09-25T23:36:52.395869",
       "auto_added": true
     }
+  },
+  {
+    "course_id": "online-udemy-3132",
+    "title": "Modern JavaScript Development",
+    "skills": [
+      "javascript",
+      "es6",
+      "react",
+      "vue",
+      "typescript"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 8,
+    "provider": "Udemy",
+    "url": null,
+    "metadata": {
+      "description": "Modern JavaScript development with latest frameworks",
+      "source": "Fallback",
+      "search_query": "Frontend developer",
+      "crawled_at": "2025-09-26T09:20:50.842731",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-datacamp-0868",
+    "title": "Complete Data Science Bootcamp",
+    "skills": [
+      "python",
+      "data analysis",
+      "machine learning",
+      "statistics",
+      "pandas",
+      "numpy"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 12,
+    "provider": "DataCamp",
+    "url": null,
+    "metadata": {
+      "description": "Comprehensive data science course covering Python, statistics, and machine learning",
+      "source": "Fallback",
+      "search_query": "data scientist",
+      "crawled_at": "2025-09-26T20:36:48.464413",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-udemy-4204",
+    "title": "Python for Data Science and Machine Learning",
+    "skills": [
+      "python",
+      "machine learning",
+      "data science",
+      "scikit-learn",
+      "tensorflow"
+    ],
+    "difficulty": "beginner",
+    "duration_weeks": 8,
+    "provider": "Udemy",
+    "url": null,
+    "metadata": {
+      "description": "Learn Python programming for data science and machine learning applications",
+      "source": "Fallback",
+      "search_query": "data scientist",
+      "crawled_at": "2025-09-26T20:36:48.464466",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-3087",
+    "title": "Advanced Data Analysis with R",
+    "skills": [
+      "r programming",
+      "data analysis",
+      "statistics",
+      "data visualization"
+    ],
+    "difficulty": "advanced",
+    "duration_weeks": 6,
+    "provider": "Coursera",
+    "url": null,
+    "metadata": {
+      "description": "Advanced statistical analysis and data visualization using R",
+      "source": "Fallback",
+      "search_query": "data scientist",
+      "crawled_at": "2025-09-26T20:36:48.464486",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-9502",
+    "title": "Python for Data Science, AI & Development",
+    "skills": [
+      "data science",
+      "python",
+      "data analysis",
+      "numpy",
+      "pandas"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/python-for-applied-data-science-ai",
+    "metadata": {
+      "description": "Skills you'll gain:Data Import/Export, Programming Principles, Web Scraping, Python Programming, Jupyter, Data Structures, Data Processing, Pandas (Python Package), Data Manipulation, JSON, Computer Programming, Restful API, NumPy, Object Oriented Programming (OOP), Scripting, Application Programming Interface (API), Automation, Data Analysis",
+      "source": "Coursera",
+      "search_query": "data scientist",
+      "crawled_at": "2025-09-26T20:53:04.227309",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-6248",
+    "title": "IBM Data Science",
+    "skills": [
+      "sql",
+      "data analysis",
+      "data science"
+    ],
+    "difficulty": "advanced",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/ibm-data-science",
+    "metadata": {
+      "description": "Skills you'll gain:Exploratory Data Analysis, Data Wrangling, Dashboard, Data Visualization Software, Data Visualization, SQL, Unsupervised Learning, Plotly, Interactive Data Visualization, Peer Review, Data Transformation, Supervised Learning, Jupyter, Data Analysis, Data Cleansing, Data Manipulation, Data Literacy, Generative AI, Professional Networking, Data Import/Export",
+      "source": "Coursera",
+      "search_query": "data scientist",
+      "crawled_at": "2025-09-26T20:53:04.227362",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-8733",
+    "title": "What is Data Science?",
+    "skills": [
+      "data analysis",
+      "data science",
+      "machine learning"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/what-is-datascience",
+    "metadata": {
+      "description": "Skills you'll gain:Data Literacy, Data Mining, Big Data, Cloud Computing, Data Analysis, Data Science, Digital Transformation, Data-Driven Decision-Making, Deep Learning, Machine Learning, Artificial Intelligence",
+      "source": "Coursera",
+      "search_query": "data scientist",
+      "crawled_at": "2025-09-26T20:53:04.227377",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-1834",
+    "title": "Google Advanced Data Analytics",
+    "skills": [
+      "data science",
+      "machine learning",
+      "python",
+      "statistics",
+      "data analysis"
+    ],
+    "difficulty": "advanced",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/google-advanced-data-analytics",
+    "metadata": {
+      "description": "Skills you'll gain:Data Storytelling, Data Visualization, Data Ethics, Exploratory Data Analysis, Sampling (Statistics), Data Presentation, Data Visualization Software, Feature Engineering, Regression Analysis, Descriptive Statistics, Statistical Hypothesis Testing, Advanced Analytics, Data Analysis, Tableau Software, Data Science, Statistical Analysis, Machine Learning, Object Oriented Programming (OOP), Interviewing Skills, Python Programming",
+      "source": "Coursera",
+      "search_query": "data scientist",
+      "crawled_at": "2025-09-26T20:53:04.227387",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-0753",
+    "title": "Google Data Analytics",
+    "skills": [
+      "statistics",
+      "data analysis"
+    ],
+    "difficulty": "advanced",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/google-data-analytics",
+    "metadata": {
+      "description": "Skills you'll gain:Data Storytelling, Rmarkdown, Data Literacy, Data Visualization, Data Presentation, Data Ethics, Data Cleansing, Data Validation, Ggplot2, R (Software), Tableau Software, Sampling (Statistics), Presentations, Spreadsheet Software, Data Analysis, Data Visualization Software, LinkedIn, Dashboard, Interviewing Skills, Professional Development",
+      "source": "Coursera",
+      "search_query": "data scientist",
+      "crawled_at": "2025-09-26T20:53:04.227395",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-cbfbbf06",
+    "title": "Introduction to Public Speaking",
+    "skills": [
+      "communication"
+    ],
+    "difficulty": "beginner",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/public-speaking",
+    "metadata": {
+      "description": "Skills you'll gain:Public Speaking, Verbal Communication Skills, Communication, Communication Strategies, Composure, Stress Management, Organizational Skills",
+      "source": "Coursera",
+      "search_query": "public speaker",
+      "crawled_at": "2025-09-26T21:21:51.438993",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-fa491cca",
+    "title": "Finding Your Professional Voice: Confidence & Impact",
+    "skills": [
+      "communication"
+    ],
+    "difficulty": "advanced",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/finding-your-professional-voice",
+    "metadata": {
+      "description": "Skills you'll gain:Public Speaking, Verbal Communication Skills, Assertiveness, Self-Awareness, Communication, Interpersonal Communications, Executive Presence, Emotional Intelligence, Composure, Respiration, Stress Management",
+      "source": "Coursera",
+      "search_query": "public speaker",
+      "crawled_at": "2025-09-26T21:21:51.439069",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-91e67cba",
+    "title": "Dynamic Public Speaking",
+    "skills": [
+      "leadership",
+      "communication"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/public-speaking",
+    "metadata": {
+      "description": "Skills you'll gain:Public Speaking, Persuasive Communication, Presentations, Verbal Communication Skills, Microsoft PowerPoint, Communication, Storytelling, Motivational Skills, Constructive Feedback, Driving engagement, Performing Arts, Concision, Drive Engagement, Action Oriented, Communication Strategies, Target Audience, Writing, Non-Verbal Communication, Composure, Leadership",
+      "source": "Coursera",
+      "search_query": "public speaker",
+      "crawled_at": "2025-09-26T21:21:51.439097",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-8963661b",
+    "title": "Good with Words: Speaking and Presenting",
+    "skills": [
+      "communication"
+    ],
+    "difficulty": "advanced",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/good-with-words-speaking-and-presenting",
+    "metadata": {
+      "description": "Skills you'll gain:Tactfulness, Public Speaking, Storytelling, Verbal Communication Skills, Persuasive Communication, Non-Verbal Communication, Communication, Cognitive flexibility, Presentations, Ingenuity, Interpersonal Communications, Communication Strategies, Constructive Feedback, Empathy, Composure, Social Skills, Professionalism, Active Listening, Optimism, Creativity",
+      "source": "Coursera",
+      "search_query": "public speaker",
+      "crawled_at": "2025-09-26T21:21:51.439119",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-d373813a",
+    "title": "Public Speaking and Presentations",
+    "skills": [
+      "communication"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/publicspeakingandpresentations",
+    "metadata": {
+      "description": "Skills you'll gain:Public Speaking, Presentations, Storytelling, Communication, Verbal Communication Skills, Communication Strategies, Verbal Strategic Communication, Concision, Goal-Oriented, Planning",
+      "source": "Coursera",
+      "search_query": "public speaker",
+      "crawled_at": "2025-09-26T21:21:51.439170",
+      "auto_added": true
+    }
   }
 ]
