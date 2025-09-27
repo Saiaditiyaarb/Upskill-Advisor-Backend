@@ -15,24 +15,36 @@ logger = logging.getLogger(__name__)
 
 
 def _extract_skills_from_text(text: str) -> List[str]:
-    """Extract potential skills from course description text using keyword matching."""
+    """Extract potential skills from course description text using enhanced keyword matching."""
     if not text:
         return []
 
-    # Common skill keywords to look for
+    # Enhanced skill patterns with more comprehensive coverage
     skill_patterns = [
         # Programming languages
-        r'\b(?:python|javascript|java|c\+\+|c#|php|ruby|go|rust|swift|kotlin|typescript)\b',
-        # Data science
-        r'\b(?:machine learning|data science|data analysis|statistics|pandas|numpy|matplotlib|scikit-learn|tensorflow|pytorch|keras)\b',
+        r'\b(?:python|javascript|java|c\+\+|c#|php|ruby|go|rust|swift|kotlin|typescript|scala|perl|r|matlab|julia)\b',
+        # Data science & Analytics
+        r'\b(?:machine learning|data science|data analysis|statistics|pandas|numpy|matplotlib|scikit-learn|tensorflow|pytorch|keras|tableau|power bi|excel|spss|sas)\b',
         # Web development
-        r'\b(?:html|css|react|angular|vue|node\.?js|express|django|flask|spring|laravel)\b',
+        r'\b(?:html|css|react|angular|vue|node\.?js|express|django|flask|spring|laravel|bootstrap|jquery|sass|less)\b',
+        # Mobile development
+        r'\b(?:android|ios|flutter|react native|xamarin|swift|kotlin|objective-c)\b',
         # Databases
-        r'\b(?:sql|mysql|postgresql|mongodb|redis|elasticsearch)\b',
+        r'\b(?:sql|mysql|postgresql|mongodb|redis|elasticsearch|oracle|sqlite|cassandra|dynamodb)\b',
         # Cloud & DevOps
-        r'\b(?:aws|azure|gcp|docker|kubernetes|jenkins|git|github|gitlab)\b',
-        # General skills
-        r'\b(?:project management|communication|leadership|problem solving|critical thinking)\b',
+        r'\b(?:aws|azure|gcp|google cloud|docker|kubernetes|jenkins|git|github|gitlab|terraform|ansible|chef|puppet|ci/cd)\b',
+        # Hardware & Embedded
+        r'\b(?:firmware|embedded|microcontroller|arduino|raspberry pi|fpga|verilog|vhdl|c programming|assembly|rtos|iot|electronics)\b',
+        # Cybersecurity
+        r'\b(?:cybersecurity|security|penetration testing|ethical hacking|cryptography|network security|malware|vulnerability)\b',
+        # Design & Creative
+        r'\b(?:ui/ux|user experience|user interface|graphic design|photoshop|illustrator|figma|sketch|adobe|animation)\b',
+        # Business & Management
+        r'\b(?:project management|agile|scrum|kanban|leadership|communication|business analysis|marketing|sales|finance)\b',
+        # AI & ML specific
+        r'\b(?:artificial intelligence|neural networks|deep learning|nlp|computer vision|reinforcement learning|chatgpt|openai)\b',
+        # Networking
+        r'\b(?:networking|cisco|ccna|ccnp|tcp/ip|routing|switching|firewall|vpn)\b',
     ]
 
     skills = set()
@@ -42,7 +54,16 @@ def _extract_skills_from_text(text: str) -> List[str]:
         matches = re.findall(pattern, text_lower, re.IGNORECASE)
         skills.update(matches)
 
-    return list(skills)
+    # Clean up and normalize skills
+    normalized_skills = []
+    for skill in skills:
+        # Normalize common variations
+        skill = skill.replace('node.js', 'nodejs').replace('node js', 'nodejs')
+        skill = skill.replace('c++', 'cpp').replace('c#', 'csharp')
+        skill = skill.replace('ui/ux', 'ui ux design')
+        normalized_skills.append(skill)
+
+    return list(set(normalized_skills))
 
 
 def _determine_difficulty(text: str) -> str:
@@ -84,6 +105,90 @@ def _estimate_duration(text: str) -> int:
                 return max(1, value // 10)  # Rough conversion: 10 hours = 1 week
 
     return 4  # Default duration
+
+
+def _calculate_relevance_score(course_title: str, course_description: str, skills: List[str], search_query: str) -> float:
+    """Calculate relevance score between course and search query to filter out irrelevant results."""
+    if not search_query:
+        return 1.0
+
+    score = 0.0
+    query_lower = search_query.lower().strip()
+    title_lower = course_title.lower()
+    desc_lower = course_description.lower() if course_description else ""
+    skills_lower = [skill.lower() for skill in skills]
+
+    # Define domain-specific keywords for better matching
+    domain_keywords = {
+        'firmware': ['firmware', 'embedded', 'microcontroller', 'hardware', 'c programming', 'assembly', 'rtos', 'electronics'],
+        'embedded': ['embedded', 'firmware', 'microcontroller', 'hardware', 'c programming', 'assembly', 'rtos', 'iot'],
+        'data science': ['data science', 'machine learning', 'statistics', 'python', 'data analysis', 'pandas', 'numpy'],
+        'web development': ['web development', 'javascript', 'html', 'css', 'react', 'frontend', 'backend'],
+        'mobile development': ['mobile', 'android', 'ios', 'flutter', 'react native', 'app development'],
+        'cybersecurity': ['cybersecurity', 'security', 'penetration testing', 'ethical hacking', 'network security'],
+        'devops': ['devops', 'docker', 'kubernetes', 'ci/cd', 'jenkins', 'terraform', 'aws', 'cloud'],
+        'ai': ['artificial intelligence', 'machine learning', 'deep learning', 'neural networks', 'nlp'],
+        'blockchain': ['blockchain', 'cryptocurrency', 'smart contracts', 'ethereum', 'bitcoin'],
+        'game development': ['game development', 'unity', 'unreal', 'gaming', 'game design'],
+    }
+
+    # Extract key terms from search query
+    query_words = set(query_lower.split())
+
+    # Check for exact query match in title (highest score)
+    if query_lower in title_lower:
+        score += 10.0
+
+    # Check for query words in title
+    title_words = set(title_lower.split())
+    title_matches = len(query_words & title_words)
+    score += title_matches * 3.0
+
+    # Check for query words in skills
+    skills_text = ' '.join(skills_lower)
+    for word in query_words:
+        if word in skills_text:
+            score += 2.0
+
+    # Check for domain relevance
+    for domain, keywords in domain_keywords.items():
+        if domain in query_lower or any(keyword in query_lower for keyword in keywords):
+            # This is a domain-specific search
+            domain_score = 0
+            for keyword in keywords:
+                if keyword in title_lower or keyword in desc_lower or keyword in skills_text:
+                    domain_score += 1.0
+
+            # If it's a domain-specific search but course has no domain keywords, penalize heavily
+            if domain_score == 0:
+                score -= 5.0
+            else:
+                score += domain_score
+            break
+
+    # Check for description relevance (lower weight)
+    if desc_lower:
+        desc_words = set(desc_lower.split())
+        desc_matches = len(query_words & desc_words)
+        score += desc_matches * 0.5
+
+    # Penalize courses that seem completely unrelated
+    # Check for conflicting domains
+    conflicting_domains = {
+        'firmware': ['web development', 'frontend', 'react', 'javascript', 'html', 'css'],
+        'web development': ['firmware', 'embedded', 'hardware', 'microcontroller'],
+        'data science': ['web development', 'frontend', 'mobile development'],
+        'mobile development': ['web development', 'backend', 'server'],
+    }
+
+    for domain, conflicts in conflicting_domains.items():
+        if domain in query_lower:
+            for conflict in conflicts:
+                if conflict in title_lower or conflict in skills_text:
+                    score -= 3.0
+
+    # Normalize score to 0-1 range
+    return max(0.0, min(1.0, score / 10.0))
 
 
 def _crawl_coursera(query: str, max_courses: int) -> List[Dict[str, Any]]:
@@ -153,6 +258,14 @@ def _crawl_coursera(query: str, max_courses: int) -> List[Dict[str, Any]]:
                 difficulty = _determine_difficulty(full_text)
                 duration = _estimate_duration(full_text)
 
+                # Calculate relevance score to filter out irrelevant courses
+                relevance_score = _calculate_relevance_score(title, description, skills, query)
+
+                # Only include courses with sufficient relevance (threshold: 0.3)
+                if relevance_score < 0.3:
+                    logger.debug(f"Skipping irrelevant Coursera course: {title} (relevance: {relevance_score:.2f})")
+                    continue
+
                 course_data = {
                     "title": title,
                     "description": description,
@@ -162,11 +275,12 @@ def _crawl_coursera(query: str, max_courses: int) -> List[Dict[str, Any]]:
                     "provider": "Coursera",
                     "url": course_url,
                     "source": "Coursera",
-                    "search_query": query
+                    "search_query": query,
+                    "relevance_score": relevance_score
                 }
 
                 courses.append(course_data)
-                logger.debug(f"Extracted Coursera course: {title}")
+                logger.debug(f"Extracted Coursera course: {title} (relevance: {relevance_score:.2f})")
 
             except Exception as e:
                 logger.warning(f"Error processing Coursera course card {i}: {e}")
