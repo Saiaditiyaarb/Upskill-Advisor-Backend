@@ -552,5 +552,718 @@
       "crawled_at": "2025-09-26T21:21:51.439170",
       "auto_added": true
     }
+  },
+  {
+    "course_id": "online-coursera-dab9d83c",
+    "title": "Microsoft Business Analyst",
+    "skills": [
+      "data analysis"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/microsoft-business-analyst",
+    "metadata": {
+      "description": "Skills you'll gain:Microsoft Power Platform, Excel Formulas, Process Flow Diagrams, Business Process Modeling, User Story, Business Requirements, Stakeholder Management, Data Modeling, Microsoft Excel, Software Development Life Cycle, Requirements Analysis, Requirements Elicitation, Quality Management, Pivot Tables And Charts, Microsoft Visio, Power BI, Microsoft Power Automate/Flow, Business Analysis, Scrum (Software Development), Data Analysis",
+      "source": "Coursera",
+      "search_query": "Business Analyst",
+      "crawled_at": "2025-09-27T09:17:41.786584",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-04e180b4",
+    "title": "IBM Business Analyst",
+    "skills": [],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/ibm-business-analyst-professional-certificate",
+    "metadata": {
+      "description": "Skills you'll gain:Data Storytelling, Risk Mitigation, Business Analysis, Business Process Modeling, Risk Analysis, Project Scoping, Process Flow Diagrams, Stakeholder Analysis, Process Optimization, Data Visualization, Requirements Management, Prompt Engineering, Risk Management, Stakeholder Management, Digital Transformation, Responsible AI, Excel Formulas, Microsoft Excel, Business Analytics, Business Requirements",
+      "source": "Coursera",
+      "search_query": "Business Analyst",
+      "crawled_at": "2025-09-27T09:17:41.786694",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-7ed25b8c",
+    "title": "Business Analysis Fundamentals",
+    "skills": [
+      "project management"
+    ],
+    "difficulty": "beginner",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/business-analysis-fundamentals",
+    "metadata": {
+      "description": "Skills you'll gain:Stakeholder Management, Business Analysis, Project Management, Stakeholder Analysis, Analysis, Requirements Elicitation, Risk Management, Microsoft Power Platform, Business Process Improvement, Problem Management",
+      "source": "Coursera",
+      "search_query": "Business Analyst",
+      "crawled_at": "2025-09-27T09:17:41.786729",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-a5d3d760",
+    "title": "Certified Business Analysis Professional™ (CBAP®)",
+    "skills": [],
+    "difficulty": "advanced",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/certified-business-analysis-professional-cbap",
+    "metadata": {
+      "description": "Skills you'll gain:Requirements Elicitation, Business Analysis, Backlogs, Requirements Management, Stakeholder Engagement, Business Process, User Requirements Documents, User Story, Business Requirements, Requirements Analysis, Business Modeling, Business Process Improvement, Business Risk Management, Business Intelligence, Business Strategies, Financial Analysis, Performance Measurement, Systems Analysis, Root Cause Analysis, Business Planning",
+      "source": "Coursera",
+      "search_query": "Business Analyst",
+      "crawled_at": "2025-09-27T09:17:41.786751",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-39666b56",
+    "title": "SAP Business Analyst",
+    "skills": [],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/sap-business-analyst",
+    "metadata": {
+      "description": "Skills you'll gain:User Story, Business Process Modeling, Risk Analysis, Performance Measurement, Stakeholder Management, Process Analysis, Business Analysis, Risk Management, Requirements Elicitation, Process Design, Requirements Management, Business Process, Process Mapping, Stakeholder Engagement, Process Improvement, Business Systems Analysis, Business Risk Management, Gap Analysis, Enterprise Risk Management (ERM), Business Requirements",
+      "source": "Coursera",
+      "search_query": "Business Analyst",
+      "crawled_at": "2025-09-27T09:17:41.786768",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-758467b6",
+    "title": "Microsoft Cybersecurity Analyst",
+    "skills": [
+      "azure"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/microsoft-cybersecurity-analyst",
+    "metadata": {
+      "description": "Skills you'll gain:Threat Modeling, MITRE ATT&CK Framework, Penetration Testing, Azure Active Directory, Network Security, Computer Systems, Security Information and Event Management (SIEM), Security Testing, Encryption, Cybersecurity, System Testing, Cloud Security, Vulnerability Scanning, Threat Management, Cloud Computing, Authentications, Active Directory, Operating Systems, Data Management, Computer Security Incident Management",
+      "source": "Coursera",
+      "search_query": "Cybersecurity Analyst",
+      "crawled_at": "2025-09-27T09:22:44.778219",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-40ec3c95",
+    "title": "IBM Cybersecurity Analyst",
+    "skills": [],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/ibm-cybersecurity-analyst",
+    "metadata": {
+      "description": "Skills you'll gain:Operating System Administration, Cyber Threat Hunting, Incident Response, IT Service Management, Identity and Access Management, Cloud Computing, Governance Risk Management and Compliance, Information Technology Infrastructure Library, Endpoint Security, Malware Protection, Penetration Testing, Computer Security Incident Management, Linux Commands, Database Management, Network Security, Networking Hardware, Cybersecurity, Cyber Threat Intelligence, Interviewing Skills, Cyber Security Assessment",
+      "source": "Coursera",
+      "search_query": "Cybersecurity Analyst",
+      "crawled_at": "2025-09-27T09:22:44.778249",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-4b67987e",
+    "title": "CompTIA Cybersecurity Analyst (CySA+) CS0-003: Unit 3",
+    "skills": [],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/pearson-comptia-cybersecurity-analyst-cysa-cs0-003-video-course-3-cwosx",
+    "metadata": {
+      "description": "Skills you'll gain:Computer Security Incident Management, Security Management, Data Security, Data Integrity",
+      "source": "Coursera",
+      "search_query": "Cybersecurity Analyst",
+      "crawled_at": "2025-09-27T09:22:44.778256",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-6d572b0c",
+    "title": "Google Cybersecurity",
+    "skills": [
+      "sql",
+      "python"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/google-cybersecurity",
+    "metadata": {
+      "description": "Skills you'll gain:Threat Modeling, Network Security, Threat Management, Incident Response, Vulnerability Management, Computer Security Incident Management, Hardening, Intrusion Detection and Prevention, Security Management, Cyber Threat Intelligence, Cyber Attacks, Cybersecurity, Network Protocols, Cloud Security, Bash (Scripting Language), Debugging, Linux, Interviewing Skills, Python Programming, SQL",
+      "source": "Coursera",
+      "search_query": "Cybersecurity Analyst",
+      "crawled_at": "2025-09-27T09:22:44.778262",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-70b51777",
+    "title": "Foundations of Cybersecurity",
+    "skills": [],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/foundations-of-cybersecurity",
+    "metadata": {
+      "description": "Skills you'll gain:Cybersecurity, Security Controls, Cyber Attacks, Security Management, Cyber Security Strategy, Incident Response, Cyber Risk, Security Information and Event Management (SIEM), Information Assurance, Data Ethics, Network Analysis, Ethical Standards And Conduct",
+      "source": "Coursera",
+      "search_query": "Cybersecurity Analyst",
+      "crawled_at": "2025-09-27T09:22:44.778267",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-739e101b",
+    "title": "IBM iOS and Android Mobile App Developer",
+    "skills": [
+      "git",
+      "swift",
+      "react",
+      "github",
+      "css"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/ibm-ios-android-mobile-app-developer-pc",
+    "metadata": {
+      "description": "Skills you'll gain:React Native, Prompt Engineering, Software Development Life Cycle, Flutter (Software), Software Architecture, Swift Programming, Apple Xcode, Mobile Development, Android Studio, Android Development, React Redux, Apple iOS, Responsive Web Design, Git (Version Control System), GitHub, Software Design, Android (Operating System), Cascading Style Sheets (CSS), User Experience Design, AI Personalization",
+      "source": "Coursera",
+      "search_query": "Mobile App Developer",
+      "crawled_at": "2025-09-27T09:25:06.549258",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-ba448cfc",
+    "title": "Meta Android Developer",
+    "skills": [
+      "git",
+      "javascript",
+      "kotlin",
+      "react",
+      "github"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/meta-android-developer",
+    "metadata": {
+      "description": "Skills you'll gain:React Native, Android Studio, Restful API, Version Control, UI/UX Research, Usability Testing, Git (Version Control System), Data Structures, Jest (JavaScript Testing Framework), Unix Commands, Android Jetpack, Android Development, Persona (User Experience), GitHub, Interaction Design, Kotlin, User Experience Design, User Interface and User Experience (UI/UX) Design, Mobile Development, Javascript",
+      "source": "Coursera",
+      "search_query": "Mobile App Developer",
+      "crawled_at": "2025-09-27T09:25:06.549302",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-e6363319",
+    "title": "Meta iOS Developer",
+    "skills": [
+      "git",
+      "javascript",
+      "swift",
+      "react",
+      "github"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/meta-ios-developer",
+    "metadata": {
+      "description": "Skills you'll gain:React Native, iOS Development, Core Data (Software), Restful API, Version Control, Apple iOS, UI/UX Research, Usability Testing, Apple Xcode, Data Structures, Swift Programming, Jest (JavaScript Testing Framework), User Interface (UI), Unix Commands, Git (Version Control System), Persona (User Experience), GitHub, Interaction Design, Mobile Development, Javascript",
+      "source": "Coursera",
+      "search_query": "Mobile App Developer",
+      "crawled_at": "2025-09-27T09:25:06.549320",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-8e92e7a5",
+    "title": "Meta React Native",
+    "skills": [
+      "git",
+      "javascript",
+      "sql",
+      "react",
+      "github"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/meta-react-native",
+    "metadata": {
+      "description": "Skills you'll gain:React Native, Jest (JavaScript Testing Framework), Version Control, UI/UX Research, Usability Testing, Unix Commands, Restful API, Git (Version Control System), Persona (User Experience), GitHub, Interaction Design, User Experience Design, SQL, User Interface and User Experience (UI/UX) Design, User Interface (UI), User Experience, Mobile Development, React.js, Web Development Tools, Javascript",
+      "source": "Coursera",
+      "search_query": "Mobile App Developer",
+      "crawled_at": "2025-09-27T09:25:06.549335",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-5533ede5",
+    "title": "Developing Mobile Apps with React Native",
+    "skills": [
+      "react",
+      "javascript"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/developing-mobile-apps-with-react-native",
+    "metadata": {
+      "description": "Skills you'll gain:React Native, Flutter (Software), Mobile Development, React Redux, React.js, Ajax, Cross Platform Development, Javascript, JavaScript Frameworks, Apple iOS, Front-End Web Development, Data Structures, Debugging, iOS Development, User Story, Android Development, JSON, Full-Stack Web Development, Scripting, Mobile Security",
+      "source": "Coursera",
+      "search_query": "Mobile App Developer",
+      "crawled_at": "2025-09-27T09:25:06.549350",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-139a4a16",
+    "title": "Preparing for Google Cloud Certification: Cloud DevOps Engineer",
+    "skills": [
+      "kubernetes"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/sre-devops-engineer-google-cloud",
+    "metadata": {
+      "description": "Skills you'll gain:Site Reliability Engineering, Kubernetes, Application Performance Management, Google Cloud Platform, Cloud Infrastructure, System Monitoring, Prompt Engineering, Application Deployment, Identity and Access Management, CI/CD, Containerization, Cloud Storage, Cloud Security, Cloud Services, Cloud Management, Service Level Agreement, Virtual Machines, Safety Culture, Network Monitoring, Culture Transformation",
+      "source": "Coursera",
+      "search_query": "DevOps Engineer",
+      "crawled_at": "2025-09-27T10:38:56.629156",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-c8f88773",
+    "title": "Exam Prep: AWS Certified DevOps Engineer - Professional",
+    "skills": [
+      "kubernetes",
+      "aws",
+      "docker"
+    ],
+    "difficulty": "advanced",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/exam-prep-dop-c02-aws-certified-devops-engineer--professional",
+    "metadata": {
+      "description": "Skills you'll gain:Amazon Web Services, Containerization, AWS CloudFormation, Infrastructure as Code (IaC), Amazon CloudWatch, CI/CD, Docker (Software), Kubernetes, Cloud-Native Computing, Cloud Infrastructure, Application Deployment, Serverless Computing, Software Development Life Cycle, Configuration Management, Disaster Recovery, Continuous Deployment, Amazon Elastic Compute Cloud, Cloud Management, DevOps, API Gateway",
+      "source": "Coursera",
+      "search_query": "DevOps Engineer",
+      "crawled_at": "2025-09-27T10:38:56.629221",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-f5b89267",
+    "title": "Enterprise Automation and Advanced Use Cases with Ansible",
+    "skills": [],
+    "difficulty": "advanced",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/enterprise-automation-and-advanced-use-cases-with-ansible",
+    "metadata": {
+      "description": "Skills you'll gain:Ansible, IT Automation, Enterprise Architecture, DevSecOps, CI/CD, Automation, Red Hat Enterprise Linux, Hardening, Enterprise Security, Devops Tools, Infrastructure as Code (IaC), Patch Management, Security Information and Event Management (SIEM), Vulnerability Scanning, Role-Based Access Control (RBAC), Vulnerability Management, Scalability, Version Control",
+      "source": "Coursera",
+      "search_query": "DevOps Engineer",
+      "crawled_at": "2025-09-27T10:38:56.629240",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-614c6936",
+    "title": "Introduction to DevOps",
+    "skills": [],
+    "difficulty": "beginner",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/intro-to-devops",
+    "metadata": {
+      "description": "Skills you'll gain:DevOps, Agile Methodology, Cloud-Native Computing, CI/CD, Test Driven Development (TDD), Scrum (Software Development), Behavior-Driven Development, Performance Metric, Accountability, Team Oriented, Culture Transformation, Microservices, Cross-Functional Collaboration",
+      "source": "Coursera",
+      "search_query": "DevOps Engineer",
+      "crawled_at": "2025-09-27T10:38:56.629255",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-0e4a3b7b",
+    "title": "IBM Applied DevOps Engineering",
+    "skills": [
+      "kubernetes",
+      "jenkins"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/ibm-applied-devops-engineering",
+    "metadata": {
+      "description": "Skills you'll gain:CI/CD, Open Web Application Security Project (OWASP), Continuous Integration, Kubernetes, Istio, Agile Software Development, Application Deployment, Test Driven Development (TDD), Gherkin (Scripting Language), Jenkins, Code Coverage, OpenShift, Cloud Applications, Agile Methodology, Behavior-Driven Development, Serverless Computing, DevOps, Secure Coding, Grafana, System Monitoring",
+      "source": "Coursera",
+      "search_query": "DevOps Engineer",
+      "crawled_at": "2025-09-27T10:38:56.629269",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-ac7e1c73",
+    "title": "AWS Monitoring, CI/CD and Deployment with Developer Tools",
+    "skills": [
+      "kubernetes",
+      "aws",
+      "docker"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/aws-monitoring-ci-cd-deployment-developer-tools",
+    "metadata": {
+      "description": "Skills you'll gain:Infrastructure as Code (IaC), Containerization, Application Deployment, CI/CD, Amazon CloudWatch, Amazon Web Services, Cloud Development, Continuous Deployment, Docker (Software), Devops Tools, Kubernetes, Serverless Computing, Continuous Integration, API Gateway, System Monitoring, API Design, Continuous Monitoring, Scalability",
+      "source": "Coursera",
+      "search_query": "DevOps Engineer",
+      "crawled_at": "2025-09-27T10:39:30.074294",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-42eba77e",
+    "title": "DevOps, Cloud, and Agile Foundations",
+    "skills": [
+      "project management"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/devops-cloud-and-agile-foundations",
+    "metadata": {
+      "description": "Skills you'll gain:Agile Software Development, Cloud Computing Architecture, Cloud Services, Agile Methodology, DevOps, Kanban Principles, Cloud Security, Cloud Infrastructure, Cloud Platforms, Cloud Hosting, Cloud Engineering, Cloud Solutions, Cloud Computing, Agile Project Management, Cloud-Native Computing, User Story, Sprint Retrospectives, CI/CD, Test Driven Development (TDD), Scrum (Software Development)",
+      "source": "Coursera",
+      "search_query": "DevOps Engineer",
+      "crawled_at": "2025-09-27T10:39:30.074314",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-26414343",
+    "title": "IBM DevOps and Software Engineering",
+    "skills": [
+      "kubernetes",
+      "git"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/devops-and-software-engineering",
+    "metadata": {
+      "description": "Skills you'll gain:CI/CD, Open Web Application Security Project (OWASP), Continuous Integration, Kubernetes, Software Development Life Cycle, Istio, Software Architecture, Linux Commands, Agile Software Development, Cloud Computing Architecture, Application Deployment, Test Driven Development (TDD), Gherkin (Scripting Language), Restful API, Git (Version Control System), DevOps, Grafana, Software Engineering, Data Import/Export, Application Development",
+      "source": "Coursera",
+      "search_query": "DevOps Engineer",
+      "crawled_at": "2025-09-27T10:39:30.074330",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-3cfd0558",
+    "title": "Human Resource Management: HR for People Managers",
+    "skills": [],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/human-resource-management",
+    "metadata": {
+      "description": "Skills you'll gain:Performance Management, Performance Appraisal, Performance Review, Compensation Management, Compensation Strategy, Compensation and Benefits, Constructive Feedback, Workforce Planning, Human Resource Strategy, Human Resources, Employee Onboarding, Recruitment, Employee Performance Management, Recruitment Strategies, Human Capital, Full Cycle Recruitment, Talent Acquisition, Human Resources Management and Planning, Compensation Analysis, People Management",
+      "source": "Coursera",
+      "search_query": "HR Manager",
+      "crawled_at": "2025-09-27T10:48:01.479867",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-5920deb8",
+    "title": "Generative AI for Human Resources (HR) Professionals",
+    "skills": [
+      "machine learning"
+    ],
+    "difficulty": "advanced",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/generative-ai-for-human-resources",
+    "metadata": {
+      "description": "Skills you'll gain:Prompt Engineering, Prompt Patterns, Generative AI, Responsible AI, HR Tech, ChatGPT, Human Resources Management and Planning, Human Resources, Workforce Planning, Human Resource Strategy, Data Ethics, LLM Application, Artificial Intelligence, Artificial Intelligence and Machine Learning (AI/ML), Data-Driven Decision-Making, Image Quality, Employee Engagement, Machine Learning, Recruitment, Performance Appraisal",
+      "source": "Coursera",
+      "search_query": "HR Manager",
+      "crawled_at": "2025-09-27T10:48:01.479919",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-4752514a",
+    "title": "Human Resources Management and GenAI",
+    "skills": [
+      "machine learning"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/human-resources-management-and-genai",
+    "metadata": {
+      "description": "Skills you'll gain:Employee Retention, Talent Pipelining, Succession Planning, Workplace inclusivity, Performance Appraisal, Human Resource Strategy, Prompt Engineering, Mediation, Human Resources, Employee Engagement, Responsible AI, Generative AI Agents, Human Resources Information System (HRIS), AI Product Strategy, HR Tech, Payroll, Performance Review, Management Training And Development, Generative AI, Artificial Intelligence and Machine Learning (AI/ML)",
+      "source": "Coursera",
+      "search_query": "HR Manager",
+      "crawled_at": "2025-09-27T10:48:01.479929",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-718075c1",
+    "title": "Strategic HRM: Talent, Performance, Compensation Design",
+    "skills": [],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/strategic-hrm-talent-performance-compensation-design",
+    "metadata": {
+      "description": "Skills you'll gain:Performance Appraisal, Human Resource Strategy, Human Resources, Compensation Strategy, Talent Management, Human Resources Management and Planning, Compensation Management, Performance Management, Organizational Development, Employee Engagement, Talent Acquisition, Employee Retention, Case Studies",
+      "source": "Coursera",
+      "search_query": "HR Manager",
+      "crawled_at": "2025-09-27T10:48:01.479937",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-9c5204b9",
+    "title": "Preparing to Manage Human Resources",
+    "skills": [],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/managing-human-resources",
+    "metadata": {
+      "description": "Skills you'll gain:Human Resource Strategy, Human Resources, Human Capital, Compensation Management, Resource Management, People Management, Employee Performance Management, Industrial and Organizational Psychology, Labor Law, Employee Engagement",
+      "source": "Coursera",
+      "search_query": "HR Manager",
+      "crawled_at": "2025-09-27T10:48:01.479944",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-afba1fd2",
+    "title": "Marketing Management",
+    "skills": [],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/spjimr-marketing-management-mooc",
+    "metadata": {
+      "description": "Skills you'll gain:Product Strategy, Strategic Marketing, Marketing Management, Marketing Strategies, Consumer Behaviour, Target Market, Marketing Communications, Product Lifecycle Management, Integrated Marketing Communications, Marketing Analytics, Brand Strategy, Marketing Channel, Market Analysis, Price Negotiation, Value Propositions",
+      "source": "Coursera",
+      "search_query": "Marketing Manager",
+      "crawled_at": "2025-09-27T10:52:46.936133",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-eaf91d68",
+    "title": "Marketing Strategy",
+    "skills": [],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/illinois-tech-marketing-strategy",
+    "metadata": {
+      "description": "Skills you'll gain:Global Marketing, Brand Management, Marketing, Strategic Marketing, Branding, Customer Relationship Management, Marketing Strategy and Techniques, Digital Marketing, Marketing Communications, Marketing Channel, Business Ethics, Market Research, Value Propositions, Consumer Behaviour, Corporate Sustainability, Innovation",
+      "source": "Coursera",
+      "search_query": "Marketing Manager",
+      "crawled_at": "2025-09-27T10:52:46.936162",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-5135746a",
+    "title": "Sports Marketing",
+    "skills": [],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/sports-marketing",
+    "metadata": {
+      "description": "Skills you'll gain:Event Marketing, Marketing, Social Media, Media Relations, Marketing Strategies, Loyalty Programs, Brand Management, Event Planning, Public Relations, Revenue Management, Strategic Partnership, Target Audience, Crisis Management",
+      "source": "Coursera",
+      "search_query": "Marketing Manager",
+      "crawled_at": "2025-09-27T10:52:46.936170",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-8f2b87d1",
+    "title": "E-commerce Marketing and Email Campaigns",
+    "skills": [],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/e-commerce-marketing-and-email-campaigns",
+    "metadata": {
+      "description": "Skills you'll gain:Email Marketing, Customer Retention, Customer Relationship Building, E-Commerce, Strategic Marketing, Online Advertising, Performance Metric, Copywriting, Sales, Decision Making, Automation",
+      "source": "Coursera",
+      "search_query": "Marketing Manager",
+      "crawled_at": "2025-09-27T10:52:46.936175",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-e77bd47a",
+    "title": "Online Marketing: Social Media, Ads & E-commerce Certificate",
+    "skills": [],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/online-marketing-social-media-ads-e-commerce-certificate",
+    "metadata": {
+      "description": "Skills you'll gain:Social Media Management, Social Media Content, Social Media Marketing, Social Media, Google Ads, Email Marketing, Online Advertising, Social Media Strategy, Social Media Campaigns, Pay Per Click Advertising, Customer Retention, Content Performance Analysis, Instagram, Paid media, Customer Relationship Building, E-Commerce, Digital Marketing, Keyword Research, Strategic Marketing, Brand Marketing",
+      "source": "Coursera",
+      "search_query": "Marketing Manager",
+      "crawled_at": "2025-09-27T10:52:46.936181",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-9c6c3910",
+    "title": "Meta Front-End Developer",
+    "skills": [
+      "git",
+      "github",
+      "css",
+      "javascript",
+      "html",
+      "react"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/meta-front-end-developer",
+    "metadata": {
+      "description": "Skills you'll gain:Jest (JavaScript Testing Framework), Version Control, UI/UX Research, Usability Testing, Responsive Web Design, Cascading Style Sheets (CSS), Data Structures, Unix Commands, HTML and CSS, Git (Version Control System), Persona (User Experience), GitHub, Interaction Design, Bootstrap (Front-End Framework), React.js, Mobile Development, Front-End Web Development, Algorithms, Web Development Tools, Javascript",
+      "source": "Coursera",
+      "search_query": "web developer",
+      "crawled_at": "2025-09-27T20:22:29.165924",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-00b65611",
+    "title": "Introduction to HTML, CSS, & JavaScript",
+    "skills": [
+      "html",
+      "javascript",
+      "css"
+    ],
+    "difficulty": "beginner",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/introduction-html-css-javascript",
+    "metadata": {
+      "description": "Skills you'll gain:Responsive Web Design, Cascading Style Sheets (CSS), Web Development, Javascript, Bootstrap (Front-End Framework), Scripting, Browser Compatibility, Application Programming Interface (API), Back-End Web Development",
+      "source": "Coursera",
+      "search_query": "web developer",
+      "crawled_at": "2025-09-27T20:22:29.165994",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-d038754d",
+    "title": "Introduction to Front-End Development",
+    "skills": [
+      "react",
+      "html",
+      "javascript",
+      "css"
+    ],
+    "difficulty": "beginner",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/introduction-to-front-end-development",
+    "metadata": {
+      "description": "Skills you'll gain:HTML and CSS, Bootstrap (Front-End Framework), Responsive Web Design, Front-End Web Development, User Interface (UI), JavaScript Frameworks, Web Design and Development, Web Applications, Web Development Tools, React.js, General Networking",
+      "source": "Coursera",
+      "search_query": "web developer",
+      "crawled_at": "2025-09-27T20:22:29.166024",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-0c07c63b",
+    "title": "Fullstack Development",
+    "skills": [
+      "typescript",
+      "react",
+      "node.js",
+      "javascript",
+      "html",
+      "sql",
+      "css"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/fullstack-development",
+    "metadata": {
+      "description": "Skills you'll gain:Prompt Engineering, Responsive Web Design, Node.JS, Command-Line Interface, TypeScript, Unit Testing, SQL, HTML and CSS, Web Content Accessibility Guidelines, Typography, Cascading Style Sheets (CSS), Ajax, React.js, User Interface and User Experience (UI/UX) Design, Hypertext Markup Language (HTML), JavaScript Frameworks, JSON, Generative AI, Database Design, Database Management",
+      "source": "Coursera",
+      "search_query": "web developer",
+      "crawled_at": "2025-09-27T20:22:29.166053",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-6c0d92c8",
+    "title": "HTML, CSS, and Javascript for Web Developers",
+    "skills": [
+      "html",
+      "javascript",
+      "css"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/html-css-javascript-for-web-developers",
+    "metadata": {
+      "description": "Skills you'll gain:Cascading Style Sheets (CSS), HTML and CSS, Javascript, Ajax, Responsive Web Design, Bootstrap (Front-End Framework), Front-End Web Development, Web Design, Hypertext Markup Language (HTML), Browser Compatibility, Web Design and Development, Web Development, JSON, Web Applications, Scripting, Usability, Cross Platform Development, Object Oriented Programming (OOP), Event-Driven Programming, User Interface and User Experience (UI/UX) Design",
+      "source": "Coursera",
+      "search_query": "web developer",
+      "crawled_at": "2025-09-27T20:22:29.166070",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-69555ba3",
+    "title": "Generative AI for Web Developers",
+    "skills": [
+      "chatgpt",
+      "user interface"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/pearson-generative-ai-for-web-developers-video-course-qaito",
+    "metadata": {
+      "description": "Skills you'll gain:Front-End Web Development, Google Gemini, Web Development Tools, Generative AI, Databases, Data Ethics, Responsible AI, Back-End Web Development, Web Content, Web Development, User Interface (UI), Servers, ChatGPT, Prompt Engineering, Microsoft Copilot, Test Automation",
+      "source": "Coursera",
+      "search_query": "web developer",
+      "crawled_at": "2025-09-27T21:09:29.848009",
+      "auto_added": true
+    }
   }
 ]
