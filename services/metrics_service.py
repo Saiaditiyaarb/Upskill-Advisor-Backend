@@ -41,6 +41,7 @@ class ComponentType(Enum):
     LLM = "llm"
     CROSS_ENCODER = "cross_encoder"
     ADVISOR = "advisor"
+    AGENT = "agent"
     API = "api"
 
 
@@ -396,7 +397,9 @@ class MetricsCollector:
             'retriever': {'avg_latency_ms': 0.0, 'success_rate': 1.0},
             'crawler': {'avg_latency_ms': 0.0, 'success_rate': 1.0},
             'llm': {'avg_latency_ms': 0.0, 'avg_cost_usd': 0.0},
-            'advisor': {'avg_latency_ms': 0.0, 'success_rate': 1.0}
+            'advisor': {'avg_latency_ms': 0.0, 'success_rate': 1.0},
+            'agent': {'avg_latency_ms': 0.0, 'success_rate': 1.0},
+            'api': {'avg_latency_ms': 0.0, 'success_rate': 1.0}
         }
 
 
