@@ -17,9 +17,12 @@ from schemas.api import AdviseRequest, AdviseResult, UserProfile
 from schemas.course import Course
 from services.retriever import Retriever, RetrievalQuery
 from services.crawler_service import crawl_courses # Import the new crawler service
+from services.metrics_service import get_metrics_collector, ComponentType
+from services.pdf_service import generate_plan_pdf
 import json
 import os
 import asyncio
+import time
 from pathlib import Path
 
 logger = logging.getLogger("advisor")
@@ -582,6 +585,78 @@ async def _add_courses_to_json(new_courses: List[Course], courses_file: str = "c
         return False
 
 
+async def advise_compare(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -> List[AdviseResult]:
+    """Run the advisor pipeline in multiple retrieval modes and return comparable results.
+
+    Modes: vector, hybrid, hybrid_rerank. Each result includes a metrics field summarizing the run.
+    """
+    modes = ["vector", "hybrid", "hybrid_rerank"]
+    results: List[AdviseResult] = []
+
+    for mode in modes:
+        # Create a copy of the request with the desired retrieval mode
+        req_mode = request.model_copy(update={"retrieval_mode": mode})
+        start = time.perf_counter()
+        result = await advise(req_mode, retriever, top_k=top_k)
+        duration_ms = (time.perf_counter() - start) * 1000.0
+
+        # Compute simple per-run metrics (coverage and diversity based on recommended courses)
+        try:
+            target_skills = set((req_mode.target_skills or []))
+            courses = result.recommended_courses or []
+
+            # Coverage: fraction of target skills covered by union of course skills
+            coverage = 0.0
+            covered = 0
+            if target_skills:
+                union_skills = set()
+                for c in courses:
+                    try:
+                        union_skills.update([s.lower() for s in (c.skills or [])])
+                    except Exception:
+                        continue
+                ts_lower = {s.lower() for s in target_skills}
+                covered = len(ts_lower & union_skills)
+                coverage = covered / float(len(ts_lower)) if ts_lower else 0.0
+
+            # Diversity: 1 - average Jaccard similarity of course skill sets
+            diversity = 1.0
+            if len(courses) >= 2:
+                import itertools
+                sims = []
+                for a, b in itertools.combinations(courses, 2):
+                    sa = set([s.lower() for s in (a.skills or [])])
+                    sb = set([s.lower() for s in (b.skills or [])])
+                    inter = len(sa & sb)
+                    union = len(sa | sb) or 1
+                    sims.append(inter / union)
+                avg_sim = sum(sims) / len(sims) if sims else 0.0
+                diversity = max(0.0, 1.0 - avg_sim)
+
+            result.metrics = {
+                "retrieval_mode": mode,
+                "duration_ms": round(duration_ms, 2),
+                "selected_count": len(courses),
+                "target_skill_count": len(req_mode.target_skills or []),
+                "covered_target_skills": covered,
+                "coverage": round(coverage, 4),
+                "diversity": round(diversity, 4)
+            }
+
+            # Add a small note to clarify mode used
+            if result.notes:
+                result.notes += f" Mode: {mode}."
+            else:
+                result.notes = f"Mode: {mode}."
+
+        except Exception as e:
+            logger.warning(f"compare_metrics_failed for mode={mode}: {e}")
+
+        results.append(result)
+
+    return results
+
+
 async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -> AdviseResult:
     """
     Asynchronous RAG-based advisor using a retriever with cross-encoder re-ranking and LLM-backed plan generation.
@@ -595,9 +670,8 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
         user_skills = set(skill.name for skill in profile.current_skills) if profile.current_skills else set()
         logger.debug(f"User skills extracted: {user_skills}")
 
-        # For target skills, we'll derive them from the goal role and current skills
-        # This is a simplified approach - in practice, you might want to have a more sophisticated mapping
-        target_skills = set()  # Will be populated based on goal role analysis
+        # Use target skills from request (e.g., extracted from JD) if provided
+        target_skills = set((request.target_skills or []))
 
         # Optimize retrieval based on whether online search is enabled
         search_online_requested = getattr(request, 'search_online', False)
@@ -609,16 +683,7 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
             # For offline-only, limit candidates for speed
             initial_candidates = max(top_k * 2, 10)
 
-        query = RetrievalQuery(skills=list(user_skills), target_skills=list(target_skills))
-
-        try:
-            retrieved: List[Course] = await retriever.hybrid_search(query, top_k=initial_candidates)
-            logger.debug(f"Retrieved {len(retrieved)} initial candidates")
-        except Exception as e:
-            logger.error(f"Failed to retrieve courses: {e}")
-            retrieved = []
-
-        # Construct query text from user profile for cross-encoder
+        # Construct query text from user profile for re-ranking and retrieval text
         goal_role = profile.goal_role or "general professional development"
 
         # Create detailed skill context including expertise levels
@@ -629,38 +694,53 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
 
         query_text = f"Goal role: {goal_role}. Current skills: {current_skills_context}. Looking for courses to advance toward {goal_role} role."
 
-        # Optimize cross-encoder usage based on search mode
-        if search_online_requested:
-            # For online search, use cross-encoder for better quality
-            cross_encoder = _get_cross_encoder()
-            reranking_method = "skill-overlap-scoring"
+        query = RetrievalQuery(skills=list(user_skills), target_skills=list(target_skills), text=goal_role)
 
-            # Re-rank using cross-encoder if available
-            if cross_encoder and retrieved:
+        # Select retrieval method based on ablation mode
+        mode = getattr(request, 'retrieval_mode', 'hybrid') or 'hybrid'
+        reranking_method = "none"
+        try:
+            if mode == 'keyword':
+                retrieved: List[Course] = await retriever.keyword_search(query, top_k=initial_candidates)
+            elif mode == 'vector':
+                retrieved = await retriever.vector_search_courses(query, top_k=initial_candidates)
+            else:  # 'hybrid' or 'hybrid_rerank'
+                retrieved = await retriever.hybrid_search(query, top_k=initial_candidates)
+            logger.debug(f"Retrieved {len(retrieved)} initial candidates using mode={mode}")
+        except Exception as e:
+            logger.error(f"Failed to retrieve courses: {e}")
+            retrieved = []
+
+        top_courses: List[Course] = retrieved[:top_k] if retrieved else []
+
+        # Apply optional cross-encoder re-ranking only for hybrid_rerank
+        if mode == 'hybrid_rerank' and retrieved:
+            cross_encoder = _get_cross_encoder()
+            if cross_encoder:
                 try:
                     top_courses = _rerank_with_cross_encoder(query_text, retrieved, cross_encoder, top_k)
                     reranking_method = "cross-encoder"
                 except Exception as e:
-                    logger.warning(f"Cross-encoder re-ranking failed, falling back to overlap scoring: {e}")
-                    cross_encoder = None
-        else:
-            # For offline-only, skip cross-encoder for speed
-            cross_encoder = None
-            reranking_method = "fast-overlap-scoring"
+                    logger.warning(f"Cross-encoder re-ranking failed, will use retrieval order: {e}")
+                    reranking_method = "hybrid"
+            else:
+                reranking_method = "hybrid"
+        elif mode == 'hybrid':
+            reranking_method = "hybrid"
+        elif mode == 'vector':
+            reranking_method = "vector"
+        elif mode == 'keyword':
+            reranking_method = "keyword"
 
-        if not cross_encoder or not retrieved:
-            # Fallback to enhanced scoring based on user skills and goal role relevance
+        # Fallback scoring if nothing retrieved
+        if not top_courses and retrieved:
             scored: List[Tuple[Course, float]] = []
             for c in retrieved:
                 try:
                     score = 0.0
-
-                    # Score based on goal role relevance (highest priority)
                     goal_role_lower = goal_role.lower()
                     course_skills_lower = [skill.lower() for skill in c.skills]
                     course_title_lower = c.title.lower()
-
-                    # Define goal role to skill mappings
                     goal_role_skills = {
                         'public speaker': ['public speaking', 'communication', 'presentation', 'storytelling', 'confidence'],
                         'data scientist': ['data science', 'machine learning', 'statistics', 'python', 'data analysis'],
@@ -669,39 +749,26 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
                         'project manager': ['project management', 'leadership', 'communication', 'planning'],
                         'business analyst': ['business analysis', 'data analysis', 'communication', 'requirements gathering']
                     }
-
-                    # Check for direct goal role match in course skills or title
                     if any(goal_word in course_title_lower or goal_word in ' '.join(course_skills_lower)
                            for goal_word in goal_role_lower.split()):
-                        score += 2.0  # High bonus for direct goal role match
-
-                    # Check for relevant skills based on goal role
+                        score += 2.0
                     if goal_role_lower in goal_role_skills:
                         relevant_skills = goal_role_skills[goal_role_lower]
-                        skill_matches = sum(1 for skill in relevant_skills
-                                          if any(skill in course_skill for course_skill in course_skills_lower))
+                        skill_matches = sum(1 for skill in relevant_skills if any(skill in cs for cs in course_skills_lower))
                         score += skill_matches * 0.5
-
-                    # Score based on user's current skills (lower priority)
                     if profile.current_skills:
                         user_skills_lower = [skill.name.lower() for skill in profile.current_skills]
                         skill_overlap = len(set(user_skills_lower) & set(course_skills_lower))
                         score += skill_overlap * 0.3
-
-                    # Bonus for beginner courses if user has beginner skills
                     if profile.current_skills and any(skill.expertise.lower() == 'beginner' for skill in profile.current_skills):
                         if c.difficulty.lower() == 'beginner':
                             score += 0.2
-
-                    # Default minimum score
                     if score == 0.0:
                         score = 0.1
-
                     scored.append((c, score))
                 except Exception as e:
                     logger.warning(f"Error scoring course {c.course_id}: {e}")
                     scored.append((c, 0.0))
-
             scored.sort(key=lambda x: x[1], reverse=True)
             top_courses = [c for c, s in scored[:top_k]] or (retrieved[:top_k] if retrieved else [])
 
@@ -878,6 +945,76 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
         if search_online_requested:
             notes += " Included results from an online search."
 
+        # Ensure timeline exists
+        if 'timeline' not in locals() or not isinstance(locals().get('timeline'), dict):
+            timeline = {"total_weeks": max(8, 4 * len(plan) if plan else 12)}
+
+        # Compute metrics (also capture values for PDF)
+        pdf_metrics: Dict[str, Any] = {}
+        try:
+            mc = get_metrics_collector()
+            # Top-k skill coverage (if target skills provided)
+            tgt = [s.lower() for s in (request.target_skills or []) if s]
+            covered = 0
+            coverage: Optional[float] = None
+            if tgt and top_courses:
+                path_skills = set()
+                for c in top_courses:
+                    path_skills.update([s.lower() for s in c.skills])
+                covered = len(set(tgt) & path_skills)
+                coverage = covered / float(len(set(tgt))) if tgt else 0.0
+                mc.record_accuracy(
+                    ComponentType.AGENT,
+                    operation="topk_skill_coverage",
+                    accuracy_score=coverage,
+                    total_items=len(set(tgt)),
+                    correct_items=covered,
+                    retrieval_mode=getattr(request, 'retrieval_mode', 'hybrid')
+                )
+            # Path diversity: 1 - avg Jaccard similarity across course skill sets
+            diversity_score: Optional[float] = None
+            if len(top_courses) >= 2:
+                import itertools
+                pairs = list(itertools.combinations(top_courses, 2))
+                sims = []
+                for a, b in pairs:
+                    sa = set([s.lower() for s in a.skills])
+                    sb = set([s.lower() for s in b.skills])
+                    inter = len(sa & sb)
+                    union = len(sa | sb) or 1
+                    sims.append(inter / union)
+                avg_sim = sum(sims) / len(sims) if sims else 0.0
+                diversity_score = max(0.0, 1.0 - avg_sim)
+                mc.record_accuracy(
+                    ComponentType.AGENT,
+                    operation="path_diversity",
+                    accuracy_score=diversity_score,
+                    total_items=100,
+                    correct_items=int(round(diversity_score * 100)),
+                    retrieval_mode=getattr(request, 'retrieval_mode', 'hybrid')
+                )
+            # Store for PDF if available
+            if coverage is not None:
+                pdf_metrics["coverage"] = round(coverage, 4)
+            if diversity_score is not None:
+                pdf_metrics["diversity"] = round(diversity_score, 4)
+        except Exception as e:
+            logger.warning(f"metrics_calculation_failed: {e}")
+
+        # Optional PDF generation
+        if getattr(request, 'generate_pdf', False):
+            try:
+                courses_by_id = {c.course_id: {"title": c.title, "provider": c.provider, "url": c.url} for c in top_courses}
+                candidate_name = None
+                try:
+                    candidate_name = (request.user_context or {}).get('name') if hasattr(request, 'user_context') else None
+                except Exception:
+                    candidate_name = None
+                pdf_path = generate_plan_pdf(candidate_name, goal_role, plan, gap_map, timeline, courses_by_id=courses_by_id, metrics=pdf_metrics)
+                notes = (notes or "") + f" PDF saved to {pdf_path}."
+            except Exception as e:
+                logger.warning(f"pdf_generation_failed: {e}")
+
         logger.info(
             "advisor_completed",
             extra={
@@ -886,10 +1023,57 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
                 "selected": len(top_courses),
                 "missing_skills": list(gap_map.keys()),
                 "reranking_method": reranking_method,
+                "retrieval_mode": getattr(request, 'retrieval_mode', 'hybrid'),
             },
         )
 
-        return AdviseResult(plan=plan, gap_map=gap_map, recommended_courses=top_courses, notes=notes)
+        # Generate an alternative plan to illustrate trade-offs (e.g., different courses or shorter duration)
+        alternative_result: Optional[AdviseResult] = None
+        try:
+            primary_ids = {step.get("course_id") for step in plan if isinstance(step, dict) and step.get("course_id")}
+            # Start with all retrieved candidates if available, otherwise fall back to selected top courses
+            candidates = list(retrieved) if 'retrieved' in locals() and retrieved else list(top_courses)
+            # Exclude any courses already used in the primary plan
+            alt_pool = [c for c in candidates if c.course_id not in primary_ids]
+            # Fallback heuristic: prefer shortest duration if exclusion removes too much
+            if not alt_pool and candidates:
+                alt_pool = sorted(candidates, key=lambda c: (c.duration_weeks or 10**6))
+                # If still identical to primary set, explicitly remove original top courses
+                primary_top_ids = {t.course_id for t in top_courses}
+                alt_pool = [c for c in alt_pool if c.course_id not in primary_top_ids]
+            alt_top = alt_pool[:top_k] if alt_pool else []
+
+            alt_gap_map = gap_map or fallback_gap_map
+            alt_plan: List[Dict[str, Any]] = []
+            if alt_top:
+                try:
+                    # Use heuristic planner to avoid extra LLM calls and ensure speed
+                    alt_plan = await _make_plan_heuristic(alt_gap_map.keys(), alt_top)
+                except Exception as e:
+                    logger.warning(f"alternative_plan_heuristic_failed: {e}")
+                    alt_plan = []
+
+            alt_notes = "Alternative plan generated by excluding courses from the primary plan to showcase trade-offs."
+
+            # Simple per-plan metrics for alternative
+            alt_metrics: Dict[str, Any] = {
+                "type": "alternative",
+                "strategy": "exclude_primary_courses",
+                "selected_count": len(alt_top),
+            }
+
+            alternative_result = AdviseResult(
+                plan=alt_plan,
+                gap_map=alt_gap_map,
+                recommended_courses=alt_top,
+                notes=alt_notes,
+                metrics=alt_metrics
+            )
+        except Exception as e:
+            logger.warning(f"alternative_plan_generation_failed: {e}")
+            alternative_result = None
+
+        return AdviseResult(plan=plan, gap_map=gap_map, recommended_courses=top_courses, notes=notes, alternative_plan=alternative_result)
 
     except Exception as e:
         logger.error(f"Critical error in advisor service: {e}")
