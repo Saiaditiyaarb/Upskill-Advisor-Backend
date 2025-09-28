@@ -61,7 +61,10 @@ class Retriever:
         self._courses_cache: List[Course] = []
         self._courses_cache_timestamp: Optional[float] = None
         self._initialization_lock = asyncio.Lock()
-        # Lazy initialize BM25 on first use
+        # Embedding-related caches
+        self._embedder = None  # callable or None
+        self._course_vectors: Optional[List[List[float]]] = None
+        # Lazy initialize indices on first use
 
     async def _ensure_bm25(self) -> None:
         """Initialize BM25 with thread-safe caching and file modification checking."""
@@ -232,9 +235,118 @@ class Retriever:
         ranked = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)[:top_k]
         return ranked
 
+    # -------- Local vector search (for ablations) --------
+    def _get_embedder(self):
+        if self._embedder is not None:
+            return self._embedder
+        try:
+            from sentence_transformers import SentenceTransformer  # type: ignore
+            model = SentenceTransformer(self._settings.embedding_model_name)
+            def _embed(texts: List[str]) -> List[List[float]]:
+                return [list(map(float, v)) for v in model.encode(texts, normalize_embeddings=True)]
+            logger.info("retriever_using_sentence_transformer", extra={"model": self._settings.embedding_model_name})
+            self._embedder = _embed
+            return self._embedder
+        except Exception as e:
+            logger.warning("SentenceTransformer unavailable; using hashing fallback", extra={"error": str(e)})
+            def _hashing_embed(texts: List[str], dim: int = 256) -> List[List[float]]:
+                from hashlib import sha256
+                vecs: List[List[float]] = []
+                for t in texts:
+                    buckets = [0.0] * dim
+                    for token in t.lower().split():
+                        h = int(sha256(token.encode("utf-8")).hexdigest(), 16)
+                        idx = h % dim
+                        sign = -1.0 if (h // dim) % 2 else 1.0
+                        buckets[idx] += sign
+                    # L2 normalize
+                    norm = sum(x * x for x in buckets) ** 0.5 or 1.0
+                    vecs.append([x / norm for x in buckets])
+                return vecs
+            self._embedder = _hashing_embed
+            return self._embedder
+
+    @staticmethod
+    def _build_embedding_text(c: Course) -> str:
+        skills = ", ".join(c.skills)
+        return f"{c.title}. Skills: {skills}. Difficulty: {c.difficulty}. Duration weeks: {c.duration_weeks}. Provider: {c.provider or ''}"
+
+    async def _ensure_vectors(self) -> None:
+        # Ensure courses are loaded
+        await self._ensure_bm25()
+        if not self._courses_cache:
+            self._course_vectors = []
+            return
+        # If vectors are already computed and timestamp unchanged, skip
+        if self._course_vectors is not None:
+            return
+        embed = self._get_embedder()
+        texts = [self._build_embedding_text(c) for c in self._courses_cache]
+        try:
+            self._course_vectors = await asyncio.to_thread(embed, texts)
+        except Exception:
+            # If embedder isn't thread-safe, call directly
+            self._course_vectors = embed(texts)
+
+    @staticmethod
+    def _cosine(a: List[float], b: List[float]) -> float:
+        if not a or not b or len(a) != len(b):
+            return 0.0
+        dot = sum(x*y for x, y in zip(a, b))
+        # vectors already normalized; but guard anyway
+        return float(dot)
+
+    async def vector_search(self, query: RetrievalQuery, top_k: int = 10) -> List[Tuple[int, float]]:
+        await self._ensure_vectors()
+        if not self._course_vectors:
+            return []
+        # Build query text prioritizing target skills then skills then free text
+        parts: List[str] = []
+        if query.target_skills:
+            parts.append(" ".join(query.target_skills))
+        if query.skills:
+            parts.append(" ".join(query.skills))
+        if query.text:
+            parts.append(query.text)
+        if not parts:
+            return []
+        qtext = " ".join(parts)
+        embed = self._get_embedder()
+        try:
+            qvec = (await asyncio.to_thread(embed, [qtext]))[0]
+        except Exception:
+            qvec = embed([qtext])[0]
+        scores = [(idx, self._cosine(vec, qvec)) for idx, vec in enumerate(self._course_vectors or [])]
+        ranked = sorted(scores, key=lambda x: x[1], reverse=True)[:top_k]
+        return ranked
+
+    async def keyword_search(self, query: RetrievalQuery, top_k: int = 10) -> List[Course]:
+        ranked = await self._bm25_keyword(query, top_k=top_k)
+        await self._ensure_bm25()
+        courses = self._courses_cache
+        results: List[Course] = []
+        for idx, _score in ranked:
+            if 0 <= idx < len(courses):
+                results.append(courses[idx])
+                if len(results) >= top_k:
+                    break
+        return results
+
+    async def vector_search_courses(self, query: RetrievalQuery, top_k: int = 10) -> List[Course]:
+        ranked = await self.vector_search(query, top_k=top_k)
+        await self._ensure_bm25()
+        courses = self._courses_cache
+        results: List[Course] = []
+        for idx, _score in ranked:
+            if 0 <= idx < len(courses):
+                results.append(courses[idx])
+                if len(results) >= top_k:
+                    break
+        return results
+
     async def hybrid_search(self, query: RetrievalQuery, top_k: int = 5) -> List[Course]:
-        """Hybrid retrieval: combine Pinecone semantic results with BM25 keyword results.
-        Returns unique Courses ranked by combined score (BM25 primary in this minimal version).
+        """Hybrid retrieval: combine local vector search and BM25 keyword scores.
+        If only one signal is available, fall back gracefully.
         """
         # Validate inputs
         if top_k <= 0:
@@ -248,48 +360,68 @@ class Retriever:
             return self._courses_cache[:top_k] if self._courses_cache else []
 
         try:
-            # Ensure BM25 is initialized
+            # Ensure indices are initialized
             await self._ensure_bm25()
+            await self._ensure_vectors()
 
-            # Get BM25 results with expanded search space for better ranking
-            search_multiplier = min(3, max(2, top_k // 2))  # Reasonable multiplier
+            # Retrieve from both modalities
+            search_multiplier = min(3, max(2, top_k // 2))
             bm25_ranked = await self._bm25_keyword(query, top_k=top_k * search_multiplier)
+            vec_ranked = await self.vector_search(query, top_k=top_k * search_multiplier)
 
-            # Map BM25 indices to courses with validation
             courses = self._courses_cache
-            selected: List[Tuple[Course, float]] = []
+            # Normalize scores to [0,1]
+            def _normalize(pairs: List[Tuple[int, float]]) -> List[Tuple[int, float]]:
+                if not pairs:
+                    return []
+                scores = [s for _, s in pairs]
+                smin, smax = min(scores), max(scores)
+                if smax - smin < 1e-9:
+                    return [(i, 1.0) for i, _ in pairs]
+                return [(i, (s - smin) / (smax - smin)) for i, s in pairs]
 
-            for idx, score in bm25_ranked:
-                if 0 <= idx < len(courses):
-                    selected.append((courses[idx], float(score)))
-                else:
-                    logger.warning(f"BM25 returned invalid course index: {idx}")
+            bm25_n = _normalize(bm25_ranked)
+            vec_n = _normalize(vec_ranked)
+
+            # Weighted combine
+            w_bm25, w_vec = 0.6, 0.4
+            combined: dict[int, float] = {}
+            for i, s in bm25_n:
+                combined[i] = combined.get(i, 0.0) + w_bm25 * s
+            for i, s in vec_n:
+                combined[i] = combined.get(i, 0.0) + w_vec * s
+
+            # If one side empty, fall back to the other
+            if not combined:
+                source = bm25_ranked or vec_ranked
+                results: List[Course] = []
+                for idx, _ in source[:top_k]:
+                    if 0 <= idx < len(courses):
+                        results.append(courses[idx])
+                if results:
+                    return results
+                # last resort: first N
+                return courses[:top_k]
+
+            ranked_indices = sorted(combined.items(), key=lambda x: x[1], reverse=True)
 
             # Deduplicate by course_id while preserving ranking order
-            seen = set()
-            unique: List[Course] = []
+            seen_ids = set()
+            results: List[Course] = []
+            for idx, _score in ranked_indices:
+                if 0 <= idx < len(courses):
+                    c = courses[idx]
+                    if c.course_id not in seen_ids:
+                        seen_ids.add(c.course_id)
+                        results.append(c)
+                        if len(results) >= top_k:
+                            break
 
-            for course, score in selected:
-                if course.course_id not in seen:
-                    seen.add(course.course_id)
-                    unique.append(course)
-                    if len(unique) >= top_k:
-                        break
+            if not results:
+                return courses[:top_k] if courses else []
 
-            # Fallback strategies if no results
-            if not unique:
-                logger.info("No BM25 results found, using fallback strategy")
-                if courses:
-                    # Return first N courses as fallback
-                    unique = courses[:top_k]
-                else:
-                    # Try to reload courses if cache is empty
-                    logger.warning("Course cache is empty, attempting to reload")
-                    courses = await self._load_local_courses()
-                    unique = courses[:top_k] if courses else []
-
-            logger.debug(f"Hybrid search returned {len(unique)} courses for query with {len(query.skills)} skills")
-            return unique
+            logger.debug(f"Hybrid search returned {len(results)} courses for query with {len(query.skills)} skills")
+            return results
 
         except Exception as e:
             logger.error(f"Error in hybrid_search: {e}")
