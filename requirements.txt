@@ -17,3 +17,4 @@ httpx
 fastapi-cache2
 accelerate
 safetensors
+reportlab
