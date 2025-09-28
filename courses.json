@@ -1265,5 +1265,218 @@
       "crawled_at": "2025-09-27T21:09:29.848009",
       "auto_added": true
     }
+  },
+  {
+    "course_id": "online-coursera-35da974d",
+    "title": "Preparing for Google Cloud Certification: Machine Learning Engineer",
+    "skills": [
+      "tensorflow",
+      "machine learning",
+      "google cloud",
+      "keras",
+      "ci/cd",
+      "artificial intelligence"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/preparing-for-google-cloud-machine-learning-engineer-professional-certificate",
+    "metadata": {
+      "description": "Skills you'll gain:Feature Engineering, MLOps (Machine Learning Operations), Prompt Engineering, Google Cloud Platform, Generative AI, Tensorflow, Keras (Neural Network Library), Apache Airflow, Cloud Infrastructure, CI/CD, Data Pipelines, Systems Design, Cloud Platforms, Data Management, Data Governance, Hybrid Cloud Computing, Workflow Management, Artificial Intelligence, Machine Learning, Cloud Computing",
+      "source": "Coursera",
+      "search_query": "Machine Learning Engineer",
+      "crawled_at": "2025-09-28T21:28:00.077182",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-3a78f64c",
+    "title": "Machine Learning",
+    "skills": [
+      "tensorflow",
+      "machine learning",
+      "numpy",
+      "reinforcement learning",
+      "python",
+      "artificial intelligence",
+      "deep learning"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/machine-learning-introduction",
+    "metadata": {
+      "description": "Skills you'll gain:Unsupervised Learning, Supervised Learning, Classification And Regression Tree (CART), Artificial Intelligence and Machine Learning (AI/ML), Applied Machine Learning, Machine Learning, Jupyter, Data Ethics, Decision Tree Learning, Tensorflow, Responsible AI, Scikit Learn (Machine Learning Library), NumPy, Predictive Modeling, Deep Learning, Artificial Intelligence, Reinforcement Learning, Random Forest Algorithm, Feature Engineering, Python Programming",
+      "source": "Coursera",
+      "search_query": "Machine Learning Engineer",
+      "crawled_at": "2025-09-28T21:28:00.077216",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-2085caff",
+    "title": "Exam Prep MLA-C01: AWS Machine Learning Engineer Assocaite",
+    "skills": [
+      "machine learning",
+      "artificial intelligence",
+      "aws"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/aws-machine-learning-engineer-assocaite",
+    "metadata": {
+      "description": "Skills you'll gain:AWS SageMaker, MLOps (Machine Learning Operations), Feature Engineering, AI Personalization, Amazon Web Services, Artificial Intelligence and Machine Learning (AI/ML), Artificial Intelligence, Amazon Elastic Compute Cloud, Data Cleansing, Data Processing, Data Wrangling, Data Integrity, Machine Learning, Machine Learning Algorithms, Data Modeling, Supervised Learning, Data Mining, Random Forest Algorithm, Data Management, Unsupervised Learning",
+      "source": "Coursera",
+      "search_query": "Machine Learning Engineer",
+      "crawled_at": "2025-09-28T21:28:00.077226",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-d73ffb7f",
+    "title": "Machine Learning with Scikit-learn, PyTorch & Hugging Face",
+    "skills": [
+      "machine learning",
+      "data analysis",
+      "scikit-learn",
+      "openai",
+      "pytorch"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/machine-learning-scikit-learn-pytorch-hugging-face",
+    "metadata": {
+      "description": "Skills you'll gain:Generative AI, Supervised Learning, Generative Model Architectures, Unsupervised Learning, Large Language Modeling, Time Series Analysis and Forecasting, Exploratory Data Analysis, LLM Application, Applied Machine Learning, Data Collection, Machine Learning Algorithms, OpenAI, Feature Engineering, Data Ethics, Dimensionality Reduction, MLOps (Machine Learning Operations), Machine Learning, Multimodal Prompts, Data Processing, Network Architecture",
+      "source": "Coursera",
+      "search_query": "Machine Learning Engineer",
+      "crawled_at": "2025-09-28T21:28:00.077235",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-e55f3701",
+    "title": "AWS Certified Machine Learning - Specialty",
+    "skills": [
+      "data analysis",
+      "machine learning",
+      "aws"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/pearson-aws-certified-machine-learning-specialty-video-course-sqo2s",
+    "metadata": {
+      "description": "Skills you'll gain:Exploratory Data Analysis, Data Analysis, Amazon Elastic Compute Cloud, Amazon CloudWatch, Application Deployment, Predictive Modeling, Data Pipelines, Data Processing",
+      "source": "Coursera",
+      "search_query": "Machine Learning Engineer",
+      "crawled_at": "2025-09-28T21:28:00.077242",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-30f4fd6d",
+    "title": "Introduction to Data Engineering",
+    "skills": [
+      "data science",
+      "security",
+      "sql"
+    ],
+    "difficulty": "beginner",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/introduction-to-data-engineering",
+    "metadata": {
+      "description": "Skills you'll gain:Data Store, Extract, Transform, Load, Data Architecture, Data Pipelines, Big Data, Data Warehousing, Data Governance, Apache Hadoop, Relational Databases, Apache Spark, Data Lakes, Databases, SQL, NoSQL, Data Security, Data Science",
+      "source": "Coursera",
+      "search_query": "Data Engineer",
+      "crawled_at": "2025-09-28T21:28:18.231355",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-0916a727",
+    "title": "DeepLearning.AI Data Engineering",
+    "skills": [
+      "sql",
+      "aws"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/data-engineering",
+    "metadata": {
+      "description": "Skills you'll gain:Apache Airflow, Data Modeling, Data Pipelines, Data Storage, Data Architecture, Requirements Analysis, Data Processing, Data Warehousing, Query Languages, Apache Hadoop, Extract, Transform, Load, Data Lakes, Amazon Web Services, Apache Spark, Database Systems, Feature Engineering, SQL, Data Integration, AWS Kinesis, Data Management",
+      "source": "Coursera",
+      "search_query": "Data Engineer",
+      "crawled_at": "2025-09-28T21:28:18.231386",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-57e86f7d",
+    "title": "IBM Data Engineering",
+    "skills": [
+      "data science",
+      "data analysis",
+      "mysql",
+      "python",
+      "sql",
+      "networking"
+    ],
+    "difficulty": "advanced",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/ibm-data-engineer",
+    "metadata": {
+      "description": "Skills you'll gain:NoSQL, Data Warehousing, Apache Hadoop, Extract, Transform, Load, Apache Airflow, Web Scraping, Linux Commands, Database Design, SQL, IBM Cognos Analytics, MySQL, Apache Spark, Database Administration, Data Store, Generative AI, Professional Networking, Data Import/Export, Python Programming, Data Analysis, Data Science",
+      "source": "Coursera",
+      "search_query": "Data Engineer",
+      "crawled_at": "2025-09-28T21:28:18.231396",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-088341dc",
+    "title": "Snowflake Data Engineering",
+    "skills": [
+      "machine learning",
+      "data analysis",
+      "sql",
+      "ci/cd",
+      "artificial intelligence"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/snowflake-data-engineering",
+    "metadata": {
+      "description": "Skills you'll gain:Data Engineering, Data Pipelines, Database Management, Data Manipulation, Databases, Data Transformation, Extract, Transform, Load, Data Lakes, Data Warehousing, Data Presentation, DevOps, Data Integration, Data Infrastructure, SQL, Cloud Development, Data Processing, CI/CD, Application Development, Artificial Intelligence and Machine Learning (AI/ML), Data Analysis",
+      "source": "Coursera",
+      "search_query": "Data Engineer",
+      "crawled_at": "2025-09-28T21:28:18.231415",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-7a59d448",
+    "title": "Data Engineering Foundations",
+    "skills": [
+      "mysql",
+      "python",
+      "sql"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/data-engineering-foundations",
+    "metadata": {
+      "description": "Skills you'll gain:Web Scraping, Database Design, SQL, MySQL, Data Transformation, Data Store, IBM DB2, Extract, Transform, Load, Data Architecture, Data Pipelines, Big Data, Databases, Data Warehousing, Data Governance, Database Management Systems, Relational Databases, Stored Procedure, Data Import/Export, Programming Principles, Python Programming",
+      "source": "Coursera",
+      "search_query": "Data Engineer",
+      "crawled_at": "2025-09-28T21:28:18.231422",
+      "auto_added": true
+    }
   }
 ]
