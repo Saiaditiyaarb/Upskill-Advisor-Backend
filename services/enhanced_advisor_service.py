@@ -12,71 +12,93 @@ from __future__ import annotations
 import logging
 import time
 import json
+import hashlib
 from typing import Any, Dict, List, Optional, Set, Tuple
 from pathlib import Path
+from functools import lru_cache
 
 from schemas.api import AdviseRequest, AdviseResult, UserProfile
 from schemas.course import Course
 from services.retriever import Retriever, RetrievalQuery
 from services.local_llm import get_local_llm, LocalLLMChain, extract_json_from_text
+from services.gemini_service import generate_learning_plan_with_fallback
 from services.metrics_service import get_metrics_collector, ComponentType
 from core.config import get_settings
 
 logger = logging.getLogger("enhanced_advisor")
 
+# Simple in-memory cache for advisor results
+_advisor_cache: Dict[str, Tuple[AdviseResult, float]] = {}
+_cache_ttl = 300  # 5 minutes
+_max_cache_size = 100
 
-async def _make_plan_with_local_llm(
-    local_llm, 
-    current_skills: List[Dict[str, str]], 
-    goal_role: str, 
-    courses: List[Course], 
+
+def _get_cache_key(request: AdviseRequest) -> str:
+    """Generate cache key for advisor request."""
+    # Create a deterministic string representation
+    key_data = {
+        "goal_role": request.profile.goal_role if request.profile else "",
+        "skills": sorted([skill.name for skill in (request.profile.current_skills or [])]) if request.profile else [],
+        "target_skills": sorted(request.target_skills or []),
+        "years_experience": request.profile.years_experience if request.profile else 0
+    }
+    key_str = json.dumps(key_data, sort_keys=True)
+    return hashlib.md5(key_str.encode()).hexdigest()
+
+
+def _get_cached_result(cache_key: str) -> Optional[AdviseResult]:
+    """Get cached result if valid."""
+    if cache_key in _advisor_cache:
+        result, timestamp = _advisor_cache[cache_key]
+        if time.time() - timestamp < _cache_ttl:
+            logger.info(f"Cache hit for advisor request: {cache_key[:8]}...")
+            return result
+        else:
+            # Remove expired entry
+            del _advisor_cache[cache_key]
+    return None
+
+
+def _cache_result(cache_key: str, result: AdviseResult) -> None:
+    """Cache advisor result with size management."""
+    # Remove oldest entries if cache is full
+    if len(_advisor_cache) >= _max_cache_size:
+        oldest_key = min(_advisor_cache.keys(), key=lambda k: _advisor_cache[k][1])
+        del _advisor_cache[oldest_key]
+
+    _advisor_cache[cache_key] = (result, time.time())
+    logger.info(f"Cached advisor result: {cache_key[:8]}...")
+
+
+async def _make_plan_with_optimized_llm(
+    current_skills: List[Dict[str, str]],
+    goal_role: str,
+    courses: List[Course],
     years_experience: Optional[int] = None
 ) -> Optional[Dict[str, Any]]:
-    """Generate learning plan using local LLM for offline mode."""
-    
-    # Create optimized prompt for local LLM
-    prompt_template = """Create a learning plan for someone with these skills: {current_skills}
-Goal role: {goal_role}
-Experience: {years_experience} years
-Available courses: {courses}
-
-Return JSON format:
-{{
-    "plan": [{{"course_id": "id", "why": "reason", "order": 1, "estimated_weeks": 4}}],
-    "timeline": {{"total_weeks": 12, "phases": [{{"phase": "Foundation", "weeks": "1-4", "focus": "Core skills"}}]}},
-    "gap_map": {{"skill": ["sub-skills"]}},
-    "notes": "Strategy summary"
-}}"""
+    """Generate learning plan using Gemini 2.0 Flash with local LLM fallback."""
 
     try:
-        # Prepare course information
-        course_info = []
+        # Prepare course information for the LLM
+        course_data = []
         for c in courses[:10]:  # Limit to top 10 for performance
-            course_detail = f"ID: {c.course_id}, Title: {c.title}, Skills: {', '.join(c.skills)}, Difficulty: {c.difficulty}, Duration: {c.duration_weeks} weeks"
-            if c.provider:
-                course_detail += f", Provider: {c.provider}"
-            course_info.append(course_detail)
+            course_data.append({
+                "course_id": c.course_id,
+                "title": c.title,
+                "skills": c.skills,
+                "difficulty": c.difficulty,
+                "duration_weeks": c.duration_weeks,
+                "provider": c.provider
+            })
 
-        # Format prompt
-        current_skills_text = ", ".join([f"{skill['name']} ({skill['expertise']})" for skill in current_skills]) if current_skills else "None"
-        
-        formatted_prompt = prompt_template.format(
-            current_skills=current_skills_text,
-            years_experience=str(years_experience) if years_experience is not None else "Not specified",
+        # Use Gemini service with automatic fallback
+        result = await generate_learning_plan_with_fallback(
+            current_skills=current_skills,
             goal_role=goal_role,
-            courses="\n".join(course_info) if course_info else "No courses available"
+            courses=course_data,
+            years_experience=years_experience
         )
 
-        # Generate response using local LLM
-        start_time = time.time()
-        response_text = local_llm.generate(formatted_prompt, max_new_tokens=512, temperature=0.1)
-        generation_time = time.time() - start_time
-        
-        logger.info(f"Local LLM generation completed in {generation_time:.2f}s")
-
-        # Extract JSON from response
-        result = extract_json_from_text(response_text)
-        
         if result and isinstance(result, dict):
             # Validate and fix structure
             if "plan" not in result:
@@ -86,16 +108,16 @@ Return JSON format:
             if "gap_map" not in result:
                 result["gap_map"] = {goal_role: ["Skills will be identified through course analysis"]}
             if "notes" not in result:
-                result["notes"] = "Learning plan generated using local LLM"
+                result["notes"] = "Learning plan generated using AI assistant"
 
-            logger.info("Local LLM plan generation successful")
+            logger.info("Optimized LLM plan generation successful")
             return result
         else:
-            logger.warning("Local LLM returned invalid JSON structure")
+            logger.warning("Optimized LLM returned invalid structure")
             return None
 
     except Exception as e:
-        logger.error(f"Local LLM plan generation failed: {e}")
+        logger.error(f"Optimized LLM plan generation failed: {e}")
         return None
 
 
@@ -281,7 +303,29 @@ async def enhanced_advise(request: AdviseRequest, retriever: Retriever, top_k: i
     Optimized for sub-2.5s response times.
     """
     start_time = time.time()
-    
+
+    # Check cache first
+    cache_key = _get_cache_key(request)
+    cached_result = _get_cached_result(cache_key)
+    if cached_result:
+        # Update metrics for cache hit
+        try:
+            mc = get_metrics_collector()
+            mc.record_latency(
+                ComponentType.AGENT,
+                operation="enhanced_advise_cache_hit",
+                duration_ms=1,  # Very fast for cache hit
+                success=True,
+                retrieval_mode="cache",
+                courses_analyzed=0,
+                courses_selected=len(cached_result.recommended_courses or []),
+                skill_map_generated=bool(cached_result.metrics and cached_result.metrics.get("skill_map"))
+            )
+        except Exception:
+            pass  # Ignore metrics errors for cache hits
+
+        return cached_result
+
     try:
         profile = request.profile
         if not profile:
@@ -297,7 +341,7 @@ async def enhanced_advise(request: AdviseRequest, retriever: Retriever, top_k: i
         query = RetrievalQuery(skills=list(user_skills), target_skills=list(target_skills), text=goal_role)
         
         # Use hybrid search for best results - limit candidates to reduce processing time
-        retrieved = await retriever.hybrid_search(query, top_k=min(top_k * 2, 15))  # Reduced from 3x to 2x for speed
+        retrieved = await retriever.hybrid_search(query, top_k=min(top_k + 3, 12))  # Further reduced for speed
         
         if not retrieved:
             logger.warning("No courses retrieved")
@@ -312,23 +356,13 @@ async def enhanced_advise(request: AdviseRequest, retriever: Retriever, top_k: i
         scored_courses = _calculate_recommendation_scores(retrieved, user_skills, target_skills)
         top_courses = [item["course"] for item in scored_courses[:top_k]]
 
-        # Generate skill map
-        skill_map = _calculate_skill_map(user_skills, target_skills, top_courses)
-
-        # Try local LLM first for plan generation
+        # Try optimized LLM first for plan generation
         years_experience = profile.years_experience
         current_skills_dict = [{"name": skill.name, "expertise": skill.expertise} for skill in profile.current_skills] if profile.current_skills else []
-        
-        llm_result = None
-        if get_settings().use_local_llm:
-            try:
-                local_llm = get_local_llm()
-                if local_llm:
-                    llm_result = await _make_plan_with_local_llm(
-                        local_llm, current_skills_dict, goal_role, top_courses, years_experience
-                    )
-            except Exception as e:
-                logger.warning(f"Local LLM failed: {e}")
+
+        llm_result = await _make_plan_with_optimized_llm(
+            current_skills_dict, goal_role, top_courses, years_experience
+        )
 
         # Generate plan
         if llm_result and isinstance(llm_result, dict):
@@ -354,7 +388,7 @@ async def enhanced_advise(request: AdviseRequest, retriever: Retriever, top_k: i
             timeline = {"total_weeks": sum(step.get("estimated_weeks", 4) for step in plan)}
             notes = "Fast plan generated for immediate response"
 
-        # Generate skill map and enhanced gap analysis
+        # Generate skill map and enhanced gap analysis (optimized)
         skill_map = _generate_skill_map(top_courses, goal_role, user_skills)
         enhanced_gap_map = _generate_detailed_gap_map(top_courses, goal_role, skill_map, user_skills)
         
@@ -432,7 +466,7 @@ async def enhanced_advise(request: AdviseRequest, retriever: Retriever, top_k: i
 
         logger.info(f"Enhanced advisor completed in {processing_time:.2f}s")
 
-        return AdviseResult(
+        result = AdviseResult(
             plan=plan,
             gap_map=enhanced_gap_map,
             recommended_courses=top_courses,
@@ -440,6 +474,11 @@ async def enhanced_advise(request: AdviseRequest, retriever: Retriever, top_k: i
             timeline=enhanced_timeline,
             metrics=detailed_metrics
         )
+
+        # Cache the result
+        _cache_result(cache_key, result)
+
+        return result
 
     except Exception as e:
         logger.error(f"Enhanced advisor failed: {e}")

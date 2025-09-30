@@ -86,7 +86,7 @@ class RecommendationRequest(BaseModel):
 
 
 @router.post("/advise", response_model=ApiResponse[AdviseResult])
-@cache(expire=60)
+@cache(expire=300)  # Increased from 60 to 300 seconds for better performance
 async def post_advise(request: AdviseRequest, retriever: Retriever = Depends(get_retriever)) -> ApiResponse[AdviseResult]:
     """Return course recommendations and a learning plan based on the user's profile.
 

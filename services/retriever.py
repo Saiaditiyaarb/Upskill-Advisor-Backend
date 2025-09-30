@@ -16,7 +16,7 @@ import json
 import os
 import logging
 from dataclasses import dataclass
-from typing import Iterable, List, Optional, Tuple
+from typing import Iterable, List, Optional, Tuple, Dict
 from functools import lru_cache
 
 from rank_bm25 import BM25Okapi  # type: ignore
@@ -64,6 +64,8 @@ class Retriever:
         # Embedding-related caches
         self._embedder = None  # callable or None
         self._course_vectors: Optional[List[List[float]]] = None
+        self._embeddings_cache: Dict[str, List[float]] = {}  # Cache for query embeddings
+        self._vector_cache_timestamp: Optional[float] = None
         # Lazy initialize indices on first use
 
     async def _ensure_bm25(self) -> None:
@@ -277,16 +279,42 @@ class Retriever:
         if not self._courses_cache:
             self._course_vectors = []
             return
-        # If vectors are already computed and timestamp unchanged, skip
-        if self._course_vectors is not None:
+
+        # Check if we need to recompute vectors based on file modification time
+        current_timestamp = None
+        if os.path.exists(self._courses_path):
+            current_timestamp = os.path.getmtime(self._courses_path)
+
+        # If vectors are already computed and file hasn't changed, skip
+        if (self._course_vectors is not None and
+            self._vector_cache_timestamp is not None and
+            current_timestamp == self._vector_cache_timestamp):
             return
+
+        # Preload embedder to avoid initialization delay
         embed = self._get_embedder()
+        if embed is None:
+            logger.warning("Embedder not available, skipping vector computation")
+            self._course_vectors = []
+            return
+
         texts = [self._build_embedding_text(c) for c in self._courses_cache]
+        logger.info(f"Computing embeddings for {len(texts)} courses")
+
         try:
+            # Use to_thread for CPU-intensive embedding computation
             self._course_vectors = await asyncio.to_thread(embed, texts)
-        except Exception:
+            self._vector_cache_timestamp = current_timestamp
+            logger.info(f"Successfully computed {len(self._course_vectors)} course embeddings")
+        except Exception as e:
+            logger.error(f"Failed to compute embeddings: {e}")
             # If embedder isn't thread-safe, call directly
-            self._course_vectors = embed(texts)
+            try:
+                self._course_vectors = embed(texts)
+                self._vector_cache_timestamp = current_timestamp
+            except Exception as e2:
+                logger.error(f"Direct embedding computation also failed: {e2}")
+                self._course_vectors = []
 
     @staticmethod
     def _cosine(a: List[float], b: List[float]) -> float:
@@ -311,11 +339,29 @@ class Retriever:
         if not parts:
             return []
         qtext = " ".join(parts)
-        embed = self._get_embedder()
-        try:
-            qvec = (await asyncio.to_thread(embed, [qtext]))[0]
-        except Exception:
-            qvec = embed([qtext])[0]
+
+        # Check cache for query embedding
+        query_hash = hash(qtext)
+        if query_hash in self._embeddings_cache:
+            qvec = self._embeddings_cache[query_hash]
+        else:
+            embed = self._get_embedder()
+            if embed is None:
+                return []
+
+            try:
+                qvec = (await asyncio.to_thread(embed, [qtext]))[0]
+                # Cache the query embedding
+                self._embeddings_cache[query_hash] = qvec
+                # Limit cache size to prevent memory issues
+                if len(self._embeddings_cache) > 1000:
+                    # Remove oldest entries (simple FIFO)
+                    oldest_key = next(iter(self._embeddings_cache))
+                    del self._embeddings_cache[oldest_key]
+            except Exception as e:
+                logger.error(f"Failed to compute query embedding: {e}")
+                return []
+
         scores = [(idx, self._cosine(vec, qvec)) for idx, vec in enumerate(self._course_vectors or [])]
         ranked = sorted(scores, key=lambda x: x[1], reverse=True)[:top_k]
         return ranked
@@ -364,8 +410,8 @@ class Retriever:
             await self._ensure_bm25()
             await self._ensure_vectors()
 
-            # Retrieve from both modalities
-            search_multiplier = min(3, max(2, top_k // 2))
+            # Retrieve from both modalities with optimized multiplier
+            search_multiplier = min(2, max(1, top_k // 2))  # Reduced from 3 to 2 for speed
             bm25_ranked = await self._bm25_keyword(query, top_k=top_k * search_multiplier)
             vec_ranked = await self.vector_search(query, top_k=top_k * search_multiplier)
 

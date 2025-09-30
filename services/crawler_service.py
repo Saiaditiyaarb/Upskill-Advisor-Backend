@@ -19,19 +19,19 @@ logger = logging.getLogger(__name__)
 def _create_robust_session() -> requests.Session:
     """Create a robust session with retry strategy and proper headers."""
     session = requests.Session()
-    
-    # Configure retry strategy
+
+    # Configure minimal retry strategy for faster failure
     retry_strategy = Retry(
-        total=3,
-        backoff_factor=1,
+        total=1,  # Reduced from 3 to 1 for faster failure
+        backoff_factor=0,  # No backoff for faster response
         status_forcelist=[429, 500, 502, 503, 504],
         allowed_methods=["HEAD", "GET", "OPTIONS"]
     )
-    
+
     adapter = HTTPAdapter(max_retries=retry_strategy)
     session.mount("http://", adapter)
     session.mount("https://", adapter)
-    
+
     # Set default headers
     session.headers.update({
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
@@ -47,8 +47,18 @@ def _create_robust_session() -> requests.Session:
         'Sec-Fetch-User': '?1',
         'Cache-Control': 'max-age=0'
     })
-    
+
     return session
+
+
+def _check_internet_connectivity() -> bool:
+    """Quick check if internet is available. Returns True if online, False if offline."""
+    try:
+        # Try to connect to Google DNS with very short timeout
+        response = requests.get('http://www.google.com', timeout=(1, 1))  # 1s connect, 1s read
+        return response.status_code == 200
+    except:
+        return False
 
 
 def _extract_skills_from_text(text: str) -> List[str]:
@@ -245,7 +255,7 @@ def _crawl_coursera(query: str, max_courses: int) -> List[Dict[str, Any]]:
         # Add random delay to avoid rate limiting
         time.sleep(random.uniform(0.5, 1.5))
 
-        response = session.get(url, timeout=15)
+        response = session.get(url, timeout=(2, 2))
         response.raise_for_status()
 
         soup = BeautifulSoup(response.content, "html.parser")
@@ -382,9 +392,9 @@ def _crawl_udemy(query: str, max_courses: int) -> List[Dict[str, Any]]:
                 session.headers.update(strategy["headers"])
                 
                 # Add delay
-                time.sleep(random.uniform(1.0, 2.0))
-                
-                response = session.get(url, timeout=20)
+                time.sleep(random.uniform(0.5, 1.0))
+
+                response = session.get(url, timeout=(2, 2))
                 
                 if response.status_code == 200:
                     try:
@@ -443,9 +453,9 @@ def _crawl_udemy(query: str, max_courses: int) -> List[Dict[str, Any]]:
                 session.headers.update(strategy["headers"])
                 
                 # Add delay
-                time.sleep(random.uniform(1.5, 3.0))
-                
-                response = session.get(url, timeout=20)
+                time.sleep(random.uniform(0.5, 1.0))
+
+                response = session.get(url, timeout=(2, 2))
                 
                 if response.status_code == 200:
                     soup = BeautifulSoup(response.content, "html.parser")
@@ -564,7 +574,7 @@ def _crawl_udemy(query: str, max_courses: int) -> List[Dict[str, Any]]:
             logger.error(f"Unexpected error crawling Udemy with {strategy['name']}: {e}")
         
         # Add delay between strategies
-        time.sleep(random.uniform(2.0, 4.0))
+        time.sleep(random.uniform(0.5, 1.0))
     
     logger.warning("All Udemy crawling strategies failed")
     return courses
@@ -696,7 +706,7 @@ def _crawl_google_digital_garage(query: str, max_courses: int) -> List[Dict[str,
             'Referer': 'https://learndigital.withgoogle.com/'
         }
 
-        response = requests.get(url, headers=headers, timeout=15)
+        response = requests.get(url, headers=headers, timeout=(2, 2))
         response.raise_for_status()
 
         soup = BeautifulSoup(response.content, "html.parser")
@@ -802,7 +812,7 @@ def _crawl_google_cloud_training(query: str, max_courses: int) -> List[Dict[str,
             'Referer': 'https://www.cloudskillsboost.google/'
         }
 
-        response = requests.get(url, headers=headers, timeout=15)
+        response = requests.get(url, headers=headers, timeout=(2, 2))
         response.raise_for_status()
 
         soup = BeautifulSoup(response.content, "html.parser")
@@ -907,6 +917,12 @@ def crawl_courses(query: str = None, max_courses: int = 10) -> List[Dict[str, An
     if not query:
         query = "programming"  # Default query
 
+    # Quick internet connectivity check - return fallback courses immediately if offline
+    logger.info("Checking internet connectivity...")
+    if not _check_internet_connectivity():
+        logger.warning("No internet connection detected, returning fallback courses immediately")
+        return _get_fallback_courses(query, max_courses)
+
     # Calculate courses per provider (now supporting 5 platforms)
     courses_per_provider = max(max_courses // 5, 2)
 
@@ -924,15 +940,18 @@ def crawl_courses(query: str = None, max_courses: int = 10) -> List[Dict[str, An
         }
 
         # Collect results as they complete with timeout
-        for future in as_completed(future_to_provider, timeout=20):  # 20 second timeout
-            provider = future_to_provider[future]
-            try:
-                provider_courses = future.result()
-                all_courses.extend(provider_courses)
-                logger.debug(f"Completed crawling {provider}: {len(provider_courses)} courses")
-            except Exception as e:
-                logger.warning(f"Error in {provider} crawling thread: {e}")
-                continue
+        try:
+            for future in as_completed(future_to_provider, timeout=2):  # 2 second timeout for fast offline response
+                provider = future_to_provider[future]
+                try:
+                    provider_courses = future.result(timeout=1)  # 1 second timeout per provider result
+                    all_courses.extend(provider_courses)
+                    logger.debug(f"Completed crawling {provider}: {len(provider_courses)} courses")
+                except Exception as e:
+                    logger.warning(f"Error in {provider} crawling thread: {e}")
+                    continue
+        except Exception as e:
+            logger.warning(f"Timeout waiting for crawling threads: {e}")
 
     # Filter and return only quality courses
     quality_courses = [c for c in all_courses if c.get('title') and len(c.get('title', '')) > 5]

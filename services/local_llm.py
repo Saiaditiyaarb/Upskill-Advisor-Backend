@@ -29,7 +29,7 @@ class LocalLLM:
     def __init__(self, model_name: Optional[str] = None, cache_dir: Optional[str] = None):
         self.settings = get_settings()
         self.model_name = model_name or self.settings.local_llm_model
-        self.cache_dir = cache_dir or self.settings.transformers_cache
+        self.cache_dir = cache_dir or self.settings.hf_home
         self.max_length = self.settings.max_sequence_length
 
         # Ensure cache directory exists

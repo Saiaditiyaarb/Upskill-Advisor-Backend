@@ -6,6 +6,7 @@ Design choices for future-proofing:
 - Keeps legacy/basic routes for quick health checks while the API evolves.
 """
 import os
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -14,6 +15,7 @@ from core.logging_config import configure_logging
 from api.v1.routes import router as v1_router
 from services.crawler_service import crawl_courses
 from services.performance_service import get_performance_metrics
+from services.retriever import get_retriever
 
 # Set HF_HOME environment variable to avoid deprecated TRANSFORMERS_CACHE warning
 _settings = get_settings()
@@ -56,3 +58,29 @@ async def performance():
 
 # Mount versioned API routers
 app.include_router(v1_router, prefix=_settings.api_v1_prefix)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize heavy components on startup to improve first request performance."""
+    logger = logging.getLogger("startup")
+    logger.info("Starting application initialization...")
+
+    try:
+        # Preload retriever and compute embeddings
+        retriever = get_retriever()
+        await retriever._ensure_bm25()
+        await retriever._ensure_vectors()
+
+        # Preload local LLM if enabled
+        if _settings.use_local_llm:
+            from services.local_llm import get_local_llm
+            llm = get_local_llm()
+            if llm:
+                logger.info("Local LLM preloaded successfully")
+
+        logger.info("Application initialization completed successfully")
+
+    except Exception as e:
+        logger.error(f"Application initialization failed: {e}")
+        # Don't fail startup, just log the error
