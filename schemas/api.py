@@ -184,3 +184,12 @@ class DemoPersonaResponse(BaseModel):
     primary: AdviseResult
     ablation_results: List[AdviseResult]
     reports: Dict[str, Any]
+
+class AdviseResult(BaseModel):
+    id: Optional[int] = None
+    plan: List[Dict[str, Any]] = Field(default_factory=list, description="Recommended learning plan steps")
+    gap_map: Dict[str, List[str]] = Field(default_factory=dict, description="Mapping of target skills to missing sub-skills")
+    recommended_courses: List[Course] = Field(default_factory=list, description="Top recommended courses")
+    notes: Optional[str] = Field(default=None, description="Additional notes or rationale for recommendations")
+    metrics: Optional[Dict[str, Any]] = Field(default=None, description="Per-run metrics for ablation/compare endpoints")
+    alternative_plan: Optional[AdviseResult] = Field(default=None, description="Alternative plan to showcase trade-offs (e.g., different courses or shorter duration)")

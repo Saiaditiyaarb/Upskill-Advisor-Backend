@@ -39,6 +39,9 @@ class Settings(BaseModel):
     openrouter_api_base: str = "https://openrouter.ai/api/v1"
     openrouter_model: str = "mistralai/mistral-7b-instruct"
 
+    # Gemini API Configuration (fallback)
+    gemini_api_key: Optional[str] = None
+
     # Local LLM Configuration
     local_llm_model: str = "microsoft/DialoGPT-medium"
     use_local_llm: bool = True
@@ -82,6 +85,7 @@ def get_settings() -> Settings:
         openrouter_api_key=os.getenv("OPENROUTER_API_KEY"),
         openrouter_api_base=os.getenv("OPENROUTER_API_BASE", "https://openrouter.ai/api/v1"),
         openrouter_model=os.getenv("OPENROUTER_MODEL", "mistralai/mistral-7b-instruct"),
+        gemini_api_key=os.getenv("GEMINI_API_KEY"),
         local_llm_model=os.getenv("LOCAL_LLM_MODEL", "microsoft/DialoGPT-medium"),
         use_local_llm=os.getenv("USE_LOCAL_LLM", "true").lower() == "true",
         cross_encoder_model=os.getenv("CROSS_ENCODER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2"),

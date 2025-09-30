@@ -589,8 +589,16 @@ async def advise_compare(request: AdviseRequest, retriever: Retriever, top_k: in
     """Run the advisor pipeline in multiple retrieval modes and return comparable results.
 
     Modes: vector, hybrid, hybrid_rerank. Each result includes a metrics field summarizing the run.
+    Optimized to reduce modes when online search is off to save API calls.
     """
-    modes = ["vector", "hybrid", "hybrid_rerank"]
+    search_online_requested = getattr(request, 'search_online', False)
+    
+    # Reduce modes when online search is off to save API calls and time
+    if search_online_requested:
+        modes = ["vector", "hybrid", "hybrid_rerank"]
+    else:
+        modes = ["hybrid"]  # Only use hybrid mode for offline requests
+    
     results: List[AdviseResult] = []
 
     for mode in modes:
@@ -606,6 +614,7 @@ async def advise_compare(request: AdviseRequest, retriever: Retriever, top_k: in
             courses = result.recommended_courses or []
 
             # Coverage: fraction of target skills covered by union of course skills
+            # Enhanced for ablation study with semantic similarity matching
             coverage = 0.0
             covered = 0
             if target_skills:
@@ -615,8 +624,42 @@ async def advise_compare(request: AdviseRequest, retriever: Retriever, top_k: in
                         union_skills.update([s.lower() for s in (c.skills or [])])
                     except Exception:
                         continue
+                
                 ts_lower = {s.lower() for s in target_skills}
-                covered = len(ts_lower & union_skills)
+                
+                # Enhanced coverage calculation for ablation study
+                # Use semantic similarity matching instead of exact string matching
+                covered_skills = set()
+                for target_skill in ts_lower:
+                    # Check for exact matches first
+                    if target_skill in union_skills:
+                        covered_skills.add(target_skill)
+                        continue
+                    
+                    # Check for semantic similarity (substring matching, word overlap)
+                    target_words = set(target_skill.split())
+                    best_match_score = 0.0
+                    
+                    for course_skill in union_skills:
+                        course_words = set(course_skill.split())
+                        
+                        # Calculate word overlap score
+                        if target_words and course_words:
+                            overlap = len(target_words & course_words)
+                            union_words = len(target_words | course_words)
+                            similarity_score = overlap / union_words if union_words > 0 else 0.0
+                            
+                            # Also check for substring matches
+                            if target_skill in course_skill or course_skill in target_skill:
+                                similarity_score = max(similarity_score, 0.8)
+                            
+                            best_match_score = max(best_match_score, similarity_score)
+                    
+                    # Consider skill covered if similarity is above threshold
+                    if best_match_score >= 0.3:  # 30% similarity threshold for ablation study
+                        covered_skills.add(target_skill)
+                
+                covered = len(covered_skills)
                 coverage = covered / float(len(ts_lower)) if ts_lower else 0.0
 
             # Diversity: 1 - average Jaccard similarity of course skill sets
@@ -676,12 +719,8 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
         # Optimize retrieval based on whether online search is enabled
         search_online_requested = getattr(request, 'search_online', False)
 
-        if search_online_requested:
-            # For online search, get more candidates for better diversity
-            initial_candidates = max(top_k * 5, 25)
-        else:
-            # For offline-only, limit candidates for speed
-            initial_candidates = max(top_k * 2, 10)
+        # Always use the same retrieval strategy regardless of online search setting
+        initial_candidates = max(top_k * 5, 25)
 
         # Construct query text from user profile for re-ranking and retrieval text
         goal_role = profile.goal_role or "general professional development"
@@ -699,6 +738,7 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
         # Select retrieval method based on ablation mode
         mode = getattr(request, 'retrieval_mode', 'hybrid') or 'hybrid'
         reranking_method = "none"
+        
         try:
             if mode == 'keyword':
                 retrieved: List[Course] = await retriever.keyword_search(query, top_k=initial_candidates)
@@ -888,10 +928,11 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
         years_experience = profile.years_experience
         current_skills_dict = [{"name": skill.name, "expertise": skill.expertise} for skill in profile.current_skills] if profile.current_skills else []
 
+        # Optimize LLM planning based on online search setting
         if search_online_requested:
-            # For online search, use full LLM planning for better quality
+            # For online search, use LLM planning for better quality
             try:
-                # Prioritize online courses in LLM planning
+                # Prioritize online courses in LLM planning if available
                 courses_for_planning = top_courses.copy()
                 if online_courses:
                     # Add metadata to indicate which courses are freshly crawled
@@ -939,7 +980,7 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
             if search_online_requested:
                 notes = f"Plan generated via heuristic with {reranking_method} re-ranking; consider configuring OpenRouter API key for richer guidance."
             else:
-                notes = f"Fast plan generated with {reranking_method} for immediate response."
+                notes = f"Fast plan generated with {reranking_method} for immediate offline response."
             logger.info("Using heuristic fallback plan")
 
         if search_online_requested:
@@ -954,6 +995,7 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
         try:
             mc = get_metrics_collector()
             # Top-k skill coverage (if target skills provided)
+            # Enhanced for ablation study with semantic similarity matching
             tgt = [s.lower() for s in (request.target_skills or []) if s]
             covered = 0
             coverage: Optional[float] = None
@@ -961,7 +1003,39 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
                 path_skills = set()
                 for c in top_courses:
                     path_skills.update([s.lower() for s in c.skills])
-                covered = len(set(tgt) & path_skills)
+                
+                # Enhanced coverage calculation for ablation study
+                covered_skills = set()
+                for target_skill in set(tgt):
+                    # Check for exact matches first
+                    if target_skill in path_skills:
+                        covered_skills.add(target_skill)
+                        continue
+                    
+                    # Check for semantic similarity (substring matching, word overlap)
+                    target_words = set(target_skill.split())
+                    best_match_score = 0.0
+                    
+                    for course_skill in path_skills:
+                        course_words = set(course_skill.split())
+                        
+                        # Calculate word overlap score
+                        if target_words and course_words:
+                            overlap = len(target_words & course_words)
+                            union_words = len(target_words | course_words)
+                            similarity_score = overlap / union_words if union_words > 0 else 0.0
+                            
+                            # Also check for substring matches
+                            if target_skill in course_skill or course_skill in target_skill:
+                                similarity_score = max(similarity_score, 0.8)
+                            
+                            best_match_score = max(best_match_score, similarity_score)
+                    
+                    # Consider skill covered if similarity is above threshold
+                    if best_match_score >= 0.3:  # 30% similarity threshold for ablation study
+                        covered_skills.add(target_skill)
+                
+                covered = len(covered_skills)
                 coverage = covered / float(len(set(tgt))) if tgt else 0.0
                 mc.record_accuracy(
                     ComponentType.AGENT,
@@ -1085,3 +1159,281 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
             recommended_courses=[],
             notes=fallback_notes
         )
+
+
+async def _make_plan_llm(current_skills: List[Dict[str, str]], goal_role: str, courses: List[Course], years_experience: Optional[int] = None) -> Optional[Dict[str, Any]]:
+    """Enhanced LLM-based plan generation using OpenRouter API with sophisticated prompt and JSON output parsing."""
+    try:
+        from langchain_openai import ChatOpenAI
+        from core.config import get_settings
+        import json
+    except Exception as e:
+        logger.warning(f"OpenRouter dependencies unavailable: {e}")
+        return None
+
+    try:
+        # Get settings and configure OpenRouter
+        settings = get_settings()
+
+        if not settings.openrouter_api_key:
+            logger.warning("OpenRouter API key not configured")
+            return None
+
+        # Initialize ChatOpenAI with OpenRouter configuration
+        llm = ChatOpenAI(
+            base_url=settings.openrouter_api_base,
+            api_key=settings.openrouter_api_key,
+            model=settings.openrouter_model,
+            temperature=0.1,
+            max_tokens=512
+        )
+
+        # Enhanced prompt template acting as expert career coach
+        prompt_template = """You are an expert career coach and learning advisor with deep knowledge of professional development paths.
+
+CONTEXT:
+- Current Skills with Expertise: {current_skills}
+- Years of Experience: {years_experience}
+- Goal Role: {goal_role}
+- Available Courses: {courses}
+
+TASK:
+Create a comprehensive, personalized learning plan to help the user advance toward their goal role. Consider their current skill levels and experience to recommend appropriate courses and learning progression.
+
+OUTPUT FORMAT:
+Return ONLY a valid JSON object with the following structure (no additional text):
+{{
+    "plan": [
+        {{
+            "course_id": "course_identifier",
+            "why": "Detailed explanation of why this course is crucial for the user's goals",
+            "order": 1,
+            "estimated_weeks": 4
+        }}
+    ],
+    "timeline": {{
+        "total_weeks": 12,
+        "phases": [
+            {{
+                "phase": "Foundation",
+                "weeks": "1-4",
+                "focus": "Building core skills"
+            }}
+        ]
+    }},
+    "gap_map": {{
+        "skill_name": ["specific sub-skills or concepts to learn"]
+    }},
+    "notes": "Overall strategy summary and additional recommendations"
+}}
+
+GUIDELINES:
+1. Prioritize courses based on prerequisite relationships and learning progression
+2. Consider the user's experience level when recommending difficulty
+3. Provide specific, actionable explanations for each course selection
+4. Create a realistic timeline with clear phases
+5. Include practical advice in the notes section
+6. Map target skills to specific learning objectives
+7. Return ONLY valid JSON, no markdown or additional formatting
+
+Generate the learning plan:"""
+
+        # Prepare course information with more detail and priority indicators
+        course_info = []
+        online_course_count = 0
+        for c in courses:
+            course_detail = (
+                f"ID: {c.course_id}, Title: {c.title}, "
+                f"Skills: {', '.join(c.skills)}, "
+                f"Difficulty: {c.difficulty}, "
+                f"Duration: {c.duration_weeks} weeks"
+            )
+            if c.provider:
+                course_detail += f", Provider: {c.provider}"
+
+            # Mark freshly crawled courses
+            if c.metadata and c.metadata.get('freshly_crawled'):
+                course_detail += " [FRESH ONLINE COURSE - PRIORITIZE]"
+                online_course_count += 1
+
+            course_info.append(course_detail)
+
+        # Add note about online courses in the prompt
+        online_note = f"\n\nIMPORTANT: {online_course_count} courses marked as [FRESH ONLINE COURSE - PRIORITIZE] are newly discovered and should be given preference in your recommendations as they represent the most current learning opportunities." if online_course_count > 0 else ""
+
+        # Format the prompt with actual values
+        current_skills_text = ", ".join([f"{skill['name']} ({skill['expertise']})" for skill in current_skills]) if current_skills else "None specified"
+
+        formatted_prompt = prompt_template.format(
+            current_skills=current_skills_text,
+            years_experience=str(years_experience) if years_experience is not None else "Not specified",
+            goal_role=goal_role,
+            courses="\n".join(course_info) if course_info else "No specific courses available"
+        ) + online_note
+
+        # Generate response using OpenRouter with enhanced error handling
+        from langchain_core.messages import HumanMessage
+
+        messages = [HumanMessage(content=formatted_prompt)]
+        
+        # Enhanced try-except block around LLM invoke for robustness with Gemini fallback
+        try:
+            response = llm.invoke(messages)
+            logger.debug("OpenRouter LLM invoke call successful")
+        except Exception as llm_error:
+            logger.warning(f"OpenRouter LLM invoke call failed: {llm_error}")
+            logger.warning(f"OpenRouter error type: {type(llm_error).__name__}")
+            
+            # Try Gemini API as fallback
+            try:
+                logger.info("Attempting Gemini API fallback...")
+                from langchain_google_genai import ChatGoogleGenerativeAI
+                
+                # Check if Gemini API key is available
+                gemini_api_key = getattr(settings, 'gemini_api_key', None)
+                if not gemini_api_key:
+                    logger.warning("Gemini API key not configured, falling back to heuristic")
+                    return None
+                
+                # Initialize Gemini with 2.5 Flash model
+                gemini_llm = ChatGoogleGenerativeAI(
+                    model="gemini-2.0-flash-exp",
+                    google_api_key=gemini_api_key,
+                    temperature=0.1,
+                    max_output_tokens=512
+                )
+                
+                response = gemini_llm.invoke(messages)
+                logger.info("Gemini API fallback successful")
+                
+            except Exception as gemini_error:
+                logger.error(f"Gemini API fallback also failed: {gemini_error}")
+                logger.error(f"Gemini error type: {type(gemini_error).__name__}")
+                return None
+
+        # Parse JSON from response content with improved error handling
+        response_text = response.content if hasattr(response, 'content') else str(response)
+
+        # Log the raw response for debugging (truncated)
+        logger.debug(f"OpenRouter raw response (first 500 chars): {response_text[:500]}")
+
+        # Extract JSON from the response with multiple fallback strategies
+        result = None
+
+        # Strategy 1: Try to parse the entire response as JSON
+        try:
+            result = json.loads(response_text)
+            logger.debug("Successfully parsed response as direct JSON")
+        except json.JSONDecodeError as e:
+            logger.debug(f"Direct JSON parsing failed: {e}")
+
+            # Strategy 2: Try to extract JSON from markdown code blocks
+            import re
+            json_patterns = [
+                r'```json\s*(\{.*?\})\s*```',  # JSON in markdown code blocks
+                r'```\s*(\{.*?\})\s*```',      # JSON in generic code blocks
+                r'(\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})',  # Balanced braces
+                r'\{.*\}',  # Simple brace matching (fallback)
+            ]
+
+            for pattern in json_patterns:
+                json_match = re.search(pattern, response_text, re.DOTALL)
+                if json_match:
+                    try:
+                        json_text = json_match.group(1) if len(json_match.groups()) > 0 else json_match.group(0)
+                        result = json.loads(json_text)
+                        logger.debug(f"Successfully extracted JSON using pattern: {pattern}")
+                        break
+                    except json.JSONDecodeError:
+                        continue
+
+            # Strategy 3: Try to clean and parse common formatting issues
+            if result is None:
+                try:
+                    # Remove common prefixes/suffixes that might interfere
+                    cleaned_text = response_text.strip()
+
+                    # Remove markdown formatting
+                    cleaned_text = re.sub(r'^```(?:json)?\s*', '', cleaned_text, flags=re.MULTILINE)
+                    cleaned_text = re.sub(r'\s*```$', '', cleaned_text, flags=re.MULTILINE)
+
+                    # Try to find the first complete JSON object
+                    start_idx = cleaned_text.find('{')
+                    if start_idx != -1:
+                        brace_count = 0
+                        end_idx = start_idx
+                        for i, char in enumerate(cleaned_text[start_idx:], start_idx):
+                            if char == '{':
+                                brace_count += 1
+                            elif char == '}':
+                                brace_count -= 1
+                                if brace_count == 0:
+                                    end_idx = i + 1
+                                    break
+
+                        if brace_count == 0:
+                            json_candidate = cleaned_text[start_idx:end_idx]
+                            result = json.loads(json_candidate)
+                            logger.debug("Successfully parsed JSON after cleaning")
+
+                except (json.JSONDecodeError, ValueError) as e:
+                    logger.debug(f"Cleaning strategy failed: {e}")
+
+        if result is None:
+            logger.warning(f"Failed to parse JSON from OpenRouter response. Response preview: {response_text[:200]}...")
+            return None
+
+        # Enhanced validation of the result structure
+        if isinstance(result, dict):
+            # Check for required fields and fix common issues
+            if "plan" not in result:
+                # Try to extract plan from common variations
+                if "learning_plan" in result:
+                    result["plan"] = result["learning_plan"]
+                elif "courses" in result:
+                    result["plan"] = result["courses"]
+                elif "recommendations" in result:
+                    result["plan"] = result["recommendations"]
+                else:
+                    # Create a minimal plan structure
+                    result["plan"] = []
+
+            # Ensure plan is a list
+            if not isinstance(result.get("plan"), list):
+                result["plan"] = []
+
+            # Add missing fields with defaults
+            if "gap_map" not in result:
+                result["gap_map"] = {goal_role: ["Skills will be identified through course analysis"]}
+
+            if "timeline" not in result:
+                result["timeline"] = {"total_weeks": len(result["plan"]) * 4 if result["plan"] else 8}
+
+            if "notes" not in result:
+                result["notes"] = "Learning plan generated successfully"
+
+            # Validate and fix plan structure
+            valid_plan = []
+            for i, step in enumerate(result["plan"]):
+                if isinstance(step, dict):
+                    # Ensure required fields exist
+                    fixed_step = {
+                        "course_id": step.get("course_id", f"unknown-{i}"),
+                        "why": step.get("why", step.get("reason", "Recommended for skill development")),
+                        "order": step.get("order", i + 1),
+                        "estimated_weeks": step.get("estimated_weeks", step.get("duration", 4))
+                    }
+                    valid_plan.append(fixed_step)
+
+            result["plan"] = valid_plan
+
+            logger.info("OpenRouter LLM plan generation successful")
+            return result
+        else:
+            logger.warning("OpenRouter LLM returned invalid structure, falling back to heuristic")
+            return None
+
+    except Exception as e:
+        logger.warning(f"OpenRouter LLM plan generation failed: {e}")
+        logger.error(f"LLM plan generation error type: {type(e).__name__}")
+        return None

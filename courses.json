@@ -1478,5 +1478,393 @@
       "crawled_at": "2025-09-28T21:28:18.231422",
       "auto_added": true
     }
+  },
+  {
+    "course_id": "online-coursera-5c7cdb07",
+    "title": "Introduction to Data Analytics",
+    "skills": [
+      "data analysis",
+      "excel",
+      "data science"
+    ],
+    "difficulty": "beginner",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/introduction-to-data-analytics",
+    "metadata": {
+      "description": "Skills you'll gain:Big Data, Data Analysis, Statistical Analysis, Apache Hadoop, Apache Hive, Data Collection, Data Science, Data Warehousing, Data Visualization, Data Cleansing, Apache Spark, Data Lakes, Data Visualization Software, Relational Databases, Microsoft Excel",
+      "source": "Coursera",
+      "search_query": "Data Analyst",
+      "crawled_at": "2025-09-29T21:01:57.576473",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-f2ca4823",
+    "title": "Microsoft Power BI Data Analyst",
+    "skills": [
+      "power bi",
+      "sql",
+      "excel",
+      "data analysis"
+    ],
+    "difficulty": "advanced",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/microsoft-power-bi-data-analyst",
+    "metadata": {
+      "description": "Skills you'll gain:Power BI, Microsoft Excel, Data Analysis, Data Literacy, Data Visualization, Data Storage, Microsoft Power Platform, Data Collection, Data Quality, Business Analytics, Timelines, Advanced Analytics, Database Design, Statistical Reporting, Statistical Visualization, Business Intelligence, Data Integration, Data Storage Technologies, SQL, Data Manipulation",
+      "source": "Coursera",
+      "search_query": "Data Analyst",
+      "crawled_at": "2025-09-29T21:01:57.576575",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-76c0e412",
+    "title": "Excel Basics for Data Analysis",
+    "skills": [
+      "data analysis",
+      "excel",
+      "data science"
+    ],
+    "difficulty": "beginner",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/excel-basics-data-analysis-ibm",
+    "metadata": {
+      "description": "Skills you'll gain:Excel Formulas, Microsoft Excel, Data Cleansing, Data Analysis, Data Import/Export, Spreadsheet Software, Data Wrangling, Data Quality, Pivot Tables And Charts, Google Sheets, Data Manipulation, Data Science, Data Integrity, Information Privacy",
+      "source": "Coursera",
+      "search_query": "Data Analyst",
+      "crawled_at": "2025-09-29T21:01:57.576603",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-a3572d98",
+    "title": "IBM Data Analyst",
+    "skills": [
+      "excel",
+      "sql",
+      "networking",
+      "data analysis",
+      "python"
+    ],
+    "difficulty": "advanced",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/ibm-data-analyst",
+    "metadata": {
+      "description": "Skills you'll gain:Exploratory Data Analysis, Data Storytelling, Data Wrangling, Dashboard, Data Visualization Software, Plotly, Data Visualization, Generative AI, SQL, Interactive Data Visualization, Data Transformation, Data Analysis, Data Cleansing, Big Data, IBM Cognos Analytics, Excel Formulas, Professional Networking, Data Import/Export, Microsoft Excel, Python Programming",
+      "source": "Coursera",
+      "search_query": "Data Analyst",
+      "crawled_at": "2025-09-29T21:01:57.576628",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-bf19b786",
+    "title": "Statistics and Data Analysis with Excel",
+    "skills": [
+      "statistics",
+      "excel",
+      "data analysis"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/excel-for-statistics-and-data-analysis",
+    "metadata": {
+      "description": "Skills you'll gain:Interactive Data Visualization, Pivot Tables And Charts, Data Visualization, Data Presentation, Data-Driven Decision-Making, Microsoft Excel, Correlation Analysis, Forecasting, Regression Analysis, Statistics, Excel Formulas, Statistical Hypothesis Testing, Descriptive Statistics, Data Analysis, Business Analytics, Statistical Inference, Box Plots, Statistical Analysis, Statistical Modeling, Statistical Visualization",
+      "source": "Coursera",
+      "search_query": "Data Analyst",
+      "crawled_at": "2025-09-29T21:26:34.788532",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-fc6a4683",
+    "title": "DevOps Mastery",
+    "skills": [
+      "terraform",
+      "kubernetes",
+      "ansible",
+      "jenkins",
+      "ci/cd",
+      "github",
+      "docker",
+      "networking",
+      "python",
+      "git"
+    ],
+    "difficulty": "advanced",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/devops-mastery",
+    "metadata": {
+      "description": "Skills you'll gain:Jenkins, Terraform, Infrastructure as Code (IaC), Linux Administration, Kubernetes, Docker (Software), CI/CD, Version Control, Ansible, Continuous Integration, Microservices, Devops Tools, GitHub, Containerization, Operating System Administration, Git (Version Control System), General Networking, Systems Administration, DevOps, Python Programming",
+      "source": "Coursera",
+      "search_query": "devops",
+      "crawled_at": "2025-09-29T23:16:03.301247",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-9122b159",
+    "title": "Software Quality Assurance and Testing",
+    "skills": [
+      "agile",
+      "security",
+      "communication"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/software-quality-assurance-testing",
+    "metadata": {
+      "description": "Skills you'll gain:Test Automation, Performance Testing, Software Quality Assurance, Security Testing, Regression Testing, User Acceptance Testing (UAT), Maintainability, Development Testing, Continuous Delivery, Code Review, Scalability, Automation, DevOps, Software Design, Technical Communication, Test Execution Engine, Application Programming Interface (API), Integration Testing, Waterfall Methodology, Agile Methodology",
+      "source": "Coursera",
+      "search_query": "Software Development Engineer in Test (SDET)",
+      "crawled_at": "2025-09-30T01:43:57.474064",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-766df350",
+    "title": "Introduction to Software Engineering",
+    "skills": [
+      "agile",
+      "scrum",
+      "python"
+    ],
+    "difficulty": "beginner",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/introduction-to-software-engineering",
+    "metadata": {
+      "description": "Skills you'll gain:Software Development Life Cycle, Software Architecture, Software Design, Scrum (Software Development), Software Engineering, Software Design Patterns, Agile Methodology, Software Development, Programming Principles, Application Development, Cloud Development, Web Development, Back-End Web Development, Front-End Web Development, Computer Programming, Integrated Development Environments, Python Programming",
+      "source": "Coursera",
+      "search_query": "Software Development Engineer in Test (SDET)",
+      "crawled_at": "2025-09-30T01:43:57.474159",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-00a4b6b5",
+    "title": "Software Testing and Automation",
+    "skills": [
+      "security"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/software-testing-automation",
+    "metadata": {
+      "description": "Skills you'll gain:Open Web Application Security Project (OWASP), Cucumber (Software), Software Testing, Selenium (Software), Gherkin (Scripting Language), JUnit, Verification And Validation, Test Automation, Unit Testing, Security Testing, Regression Testing, Test Case, Testability, Behavior-Driven Development, Code Coverage, Performance Testing, Development Testing, Test Planning, Acceptance Testing, Software Quality Assurance",
+      "source": "Coursera",
+      "search_query": "Software Development Engineer in Test (SDET)",
+      "crawled_at": "2025-09-30T01:43:57.474171",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-9ea0f106",
+    "title": "Strategic Software Testing",
+    "skills": [],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/pearson-strategic-software-testing-selecting-testing-approaches-to-fit-a-n-y1gx5",
+    "metadata": {
+      "description": "Skills you'll gain:Software Testing, Test Automation, Test Planning, Acceptance Testing, Test Case, Functional Testing, Scenario Testing, Unit Testing, Integration Testing, Regression Testing, User Acceptance Testing (UAT), Performance Testing, Usability Testing",
+      "source": "Coursera",
+      "search_query": "Software Development Engineer in Test (SDET)",
+      "crawled_at": "2025-09-30T01:43:57.474181",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-296aa493",
+    "title": "Software Testing, Deployment, and Maintenance Strategies",
+    "skills": [
+      "ci/cd"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/software-testing-deployment-and-maintenance-strategies",
+    "metadata": {
+      "description": "Skills you'll gain:Test Planning, Behavior-Driven Development, Risk Management, Release Management, Test Driven Development (TDD), Application Deployment, Stakeholder Management, Data Validation, Software Testing, CI/CD, Software Development Life Cycle, Software Quality Assurance, Systems Analysis, Software Systems, Product Lifecycle Management, Systems Thinking, Data Modeling, Process Flow Diagrams, Business Process Automation, Digital Transformation",
+      "source": "Coursera",
+      "search_query": "Software Development Engineer in Test (SDET)",
+      "crawled_at": "2025-09-30T01:43:57.474191",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-f393b478",
+    "title": "ISTQB Foundation Level Software Testing  Certification Prep",
+    "skills": [],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/istqb-ctfl-prep",
+    "metadata": {
+      "description": "Skills you'll gain:Test Planning, Test Tools, Software Testing, Configuration Management, Test Case, Integration Testing, System Testing, Test Automation, Software Development Life Cycle, Acceptance Testing, Software Technical Review, Code Review, Unit Testing, Functional Testing, Regression Testing, Software Quality Assurance, Risk Management, Risk Management Framework, Verification And Validation, Usability Testing",
+      "source": "Coursera",
+      "search_query": "Software Development Engineer in Test (SDET)",
+      "crawled_at": "2025-09-30T01:44:03.028839",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-01549c53",
+    "title": "Practical Software Testing",
+    "skills": [
+      "communication"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/practical-software-testing",
+    "metadata": {
+      "description": "Skills you'll gain:Test Planning, Test Case, Software Testing, Functional Testing, Software Documentation, System Testing, Development Testing, Regression Testing, Code Review, Test Data, Issue Tracking, Quality Assurance, Technical Communication",
+      "source": "Coursera",
+      "search_query": "Software Development Engineer in Test (SDET)",
+      "crawled_at": "2025-09-30T01:44:03.028846",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-bae3a9c9",
+    "title": "Microsoft Full-Stack Developer",
+    "skills": [
+      "css",
+      "github",
+      "git",
+      "html",
+      "ci/cd",
+      "sql"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/microsoft-full-stack-developer",
+    "metadata": {
+      "description": "Skills you'll gain:CI/CD, GitHub, C# (Programming Language), HTML and CSS, Load Balancing, Continuous Integration, Git (Version Control System), Role-Based Access Control (RBAC), Scalability, Object Oriented Programming (OOP), Authentications, ASP.NET, Full-Stack Web Development, Web Development, Debugging, SQL, Application Deployment, Microsoft Copilot, .NET Framework, Graph Theory",
+      "source": "Coursera",
+      "search_query": "Full-Stack Developer",
+      "crawled_at": "2025-09-30T01:45:58.321432",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-b1717973",
+    "title": "Meta Full-Stack Developer",
+    "skills": [
+      "css",
+      "github",
+      "react",
+      "python",
+      "git",
+      "html",
+      "sql",
+      "bootstrap",
+      "javascript",
+      "django"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/meta-full-stack-developer",
+    "metadata": {
+      "description": "Skills you'll gain:Jest (JavaScript Testing Framework), Django (Web Framework), Version Control, Restful API, Responsive Web Design, Unix Commands, HTML and CSS, Git (Version Control System), GitHub, Relational Databases, Object Oriented Programming (OOP), Database Management Systems, Bootstrap (Front-End Framework), React.js, Mobile Development, SQL, Database Design, API Design, Linux Commands, Python Programming",
+      "source": "Coursera",
+      "search_query": "Full-Stack Developer",
+      "crawled_at": "2025-09-30T01:45:58.321497",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-b2f640b8",
+    "title": "IBM Full Stack Software Developer",
+    "skills": [
+      "kubernetes",
+      "react",
+      "git",
+      "ci/cd",
+      "django",
+      "flask",
+      "nodejs"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/ibm-full-stack-cloud-developer",
+    "metadata": {
+      "description": "Skills you'll gain:Prompt Engineering, CI/CD, Software Development Life Cycle, Software Architecture, Istio, Cloud Computing Architecture, Application Deployment, Kubernetes, React Redux, Cloud Services, Node.JS, Responsive Web Design, Django (Web Framework), Object-Relational Mapping, OpenShift, Git (Version Control System), Flask (Web Framework), Cloud Computing, Data Import/Export, Engineering Software",
+      "source": "Coursera",
+      "search_query": "Full-Stack Developer",
+      "crawled_at": "2025-09-30T01:45:58.321543",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-158fd4f4",
+    "title": "Meta Back-End Developer",
+    "skills": [
+      "github",
+      "git",
+      "sql",
+      "bootstrap",
+      "python",
+      "django"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/meta-back-end-developer",
+    "metadata": {
+      "description": "Skills you'll gain:Django (Web Framework), Full-Stack Web Development, Version Control, Restful API, Data Structures, Unix Commands, Bootstrap (Front-End Framework), Git (Version Control System), Back-End Web Development, GitHub, Web Design and Development, Relational Databases, Front-End Web Development, Object Oriented Programming (OOP), Database Management Systems, SQL, Database Design, Python Programming, Computer Programming, Cloud Hosting",
+      "source": "Coursera",
+      "search_query": "Full-Stack Developer",
+      "crawled_at": "2025-09-30T01:46:03.357270",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-1e4b5968",
+    "title": "Introduction to Test and Behavior Driven Development",
+    "skills": [],
+    "difficulty": "beginner",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/test-and-behavior-driven-development-tdd-bdd",
+    "metadata": {
+      "description": "Skills you'll gain:Test Driven Development (TDD), Gherkin (Scripting Language), Code Coverage, Behavior-Driven Development, Software Testing, Unit Testing, Test Automation, Test Case, Test Data, Integration Testing, Restful API, Microservices",
+      "source": "Coursera",
+      "search_query": "Software Development Engineer in Test",
+      "crawled_at": "2025-09-30T01:47:50.788776",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-bcdacbfe",
+    "title": "Microsoft Public Relations and Communications Associate",
+    "skills": [
+      "communication",
+      "marketing"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/microsoft-public-relations",
+    "metadata": {
+      "description": "Skills you'll gain:Media Relations, Proofreading, Public Relations, Stakeholder Analysis, Integrated Marketing Communications, Marketing Communications, Public Affairs, Content Management, Web Content, Performance Reporting, Storytelling, Content Management Systems, Press Releases, Strategic Communication, Content Strategy, Report Writing, Content Marketing, Social Media Content, Marketing Effectiveness, Generative AI",
+      "source": "Coursera",
+      "search_query": "public speaker",
+      "crawled_at": "2025-09-30T02:15:51.196022",
+      "auto_added": true
+    }
   }
 ]

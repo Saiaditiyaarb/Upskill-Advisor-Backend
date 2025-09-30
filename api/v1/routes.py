@@ -14,13 +14,29 @@ import json
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import JSONResponse
+# from sqlalchemy.orm import Session
+# from ... import models, schemas
+# from ...repository import AdviceRepository
+# from ...database import SessionLocal, engine
 
-from schemas.api import AdviseRequest, AdviseResult, ApiResponse, DemoPersonaRequest, DemoPersonaResponse, SkillDetail, UserProfile
+# models.Base.metadata.create_all(bind=engine)
+#
+#
+# # Dependency
+# def get_db():
+#     db = SessionLocal()
+#     try:
+#         yield db
+#     finally:
+#         db.close()
+# from fastapi.responses import JSONResponse
+
+from schemas.api import AdviseRequest, AdviseResult, ApiResponse, SkillDetail, UserProfile
 from schemas.course import Course
 from services.advisor_service import advise, advise_compare
 from services.retriever import Retriever, get_retriever
 from services.course_manager import CourseManager
+from services.pii_redaction import PIIRedactor, create_safe_logging_config
 from core.logging_config import set_request_id
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
@@ -40,6 +56,9 @@ logger = logging.getLogger("api")
 
 # Initialize course manager
 course_manager = CourseManager()
+
+# Initialize PII redactor for safe logging
+pii_redactor = PIIRedactor(create_safe_logging_config())
 
 
 # Request/Response models for new endpoints
@@ -75,48 +94,58 @@ async def post_advise(request: AdviseRequest, retriever: Retriever = Depends(get
     """
     req_id = str(uuid4())
     set_request_id(req_id)
-
     try:
-        # Validate request data
-        if not request.profile:
-            logger.error("advise_request_invalid", extra={"request_id": req_id, "error": "Missing profile"})
-            raise HTTPException(status_code=400, detail="Profile is required")
-
-        if not request.profile.goal_role:
-            logger.error("advise_request_invalid", extra={"request_id": req_id, "error": "Missing goal_role"})
-            raise HTTPException(status_code=400, detail="Goal role is required")
-
-        logger.info("advise_request_received", extra={
-            "request_id": req_id,
-            "goal_role": request.profile.goal_role,
-            "current_skills_count": len(request.profile.current_skills) if request.profile.current_skills else 0,
-            "years_experience": request.profile.years_experience
-        })
-
         result = await advise(request, retriever)
 
+        # Log with PII redaction for privacy compliance
+        safe_request_data = pii_redactor.redact_request_data(request.model_dump())
         logger.info("advise_request_completed", extra={
             "request_id": req_id,
             "recommended_courses_count": len(result.recommended_courses) if result.recommended_courses else 0,
-            "plan_steps": len(result.plan) if result.plan else 0
+            "plan_steps": len(result.plan) if result.plan else 0,
+            "safe_request_data": safe_request_data
         })
 
         return ApiResponse[AdviseResult](request_id=req_id, status="ok", data=result)
-
-    except HTTPException:
-        # Re-raise HTTP exceptions as-is
-        raise
     except Exception as e:
+        # Log error with PII redaction
+        safe_request_data = pii_redactor.redact_request_data(request.model_dump())
         logger.error("advise_request_failed", extra={
             "request_id": req_id,
             "error": str(e),
-            "error_type": type(e).__name__
+            "error_type": type(e).__name__,
+            "safe_request_data": safe_request_data
         })
         raise HTTPException(
             status_code=500,
             detail="An internal error occurred while processing your request. Please try again later."
         )
 
+# @router.get("/advise/history", response_model=ApiResponse[List[AdviseResult]])
+# async def get_advice_history(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+#     """Retrieve a history of generated advice."""
+#     req_id = str(uuid4())
+#     set_request_id(req_id)
+#     repo = AdviceRepository(db)
+#     advice_history = repo.get_all_advice(skip=skip, limit=limit)
+#
+#     results = [schemas.AdviseResult(id=advice.id, **advice.result_data) for advice in advice_history]
+#
+#     return ApiResponse[List[AdviseResult]](request_id=req_id, status="ok", data=results)
+#
+
+# @router.get("/advise/{advice_id}", response_model=ApiResponse[AdviseResult])
+# async def get_advice_by_id(advice_id: int, db: Session = Depends(get_db)):
+#     """Retrieve a specific piece of advice by its ID."""
+#     req_id = str(uuid4())
+#     set_request_id(req_id)
+#     repo = AdviceRepository(db)
+#     advice = repo.get_advice(advice_id=advice_id)
+#     if advice is None:
+#         raise HTTPException(status_code=404, detail="Advice not found")
+#
+#     result = schemas.AdviseResult(id=advice.id, **advice.result_data)
+#     return ApiResponse[AdviseResult](request_id=req_id, status="ok", data=result)
 
 # New course management endpoints
 @router.get("/courses/search")
@@ -229,6 +258,29 @@ async def search_courses_post(request: CourseSearchRequest):
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 
+@router.get("/courses/stats")
+async def get_course_statistics():
+    """
+    Get comprehensive statistics about the course database
+    """
+    req_id = str(uuid4())
+    set_request_id(req_id)
+
+    try:
+        logger.info("get_stats_request", extra={"request_id": req_id})
+
+        stats = course_manager.get_statistics()
+
+        return ApiResponse[Dict[str, Any]](request_id=req_id, status="ok", data=stats)
+
+    except Exception as e:
+        logger.error("get_stats_failed", extra={
+            "request_id": req_id,
+            "error": str(e)
+        })
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve statistics: {str(e)}")
+
+
 @router.get("/courses/{course_id}")
 async def get_course(course_id: str):
     """
@@ -258,29 +310,6 @@ async def get_course(course_id: str):
             "error": str(e)
         })
         raise HTTPException(status_code=500, detail=f"Failed to retrieve course: {str(e)}")
-
-
-@router.get("/courses/stats")
-async def get_course_statistics():
-    """
-    Get comprehensive statistics about the course database
-    """
-    req_id = str(uuid4())
-    set_request_id(req_id)
-
-    try:
-        logger.info("get_stats_request", extra={"request_id": req_id})
-
-        stats = course_manager.get_statistics()
-
-        return ApiResponse[Dict[str, Any]](request_id=req_id, status="ok", data=stats)
-
-    except Exception as e:
-        logger.error("get_stats_failed", extra={
-            "request_id": req_id,
-            "error": str(e)
-        })
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve statistics: {str(e)}")
 
 
 @router.post("/courses/recommend")
@@ -502,11 +531,14 @@ async def post_advise_compare(request: AdviseRequest, retriever: Retriever = Dep
             logger.error("advise_compare_invalid", extra={"request_id": req_id, "error": "Missing goal_role"})
             raise HTTPException(status_code=400, detail="Goal role is required")
 
+        # Log with PII redaction for privacy compliance
+        safe_request_data = pii_redactor.redact_request_data(request.model_dump())
         logger.info("advise_compare_received", extra={
             "request_id": req_id,
             "goal_role": request.profile.goal_role,
             "current_skills_count": len(request.profile.current_skills) if request.profile.current_skills else 0,
-            "years_experience": request.profile.years_experience
+            "years_experience": request.profile.years_experience,
+            "safe_request_data": safe_request_data
         })
 
         results = await advise_compare(request, retriever)
@@ -528,181 +560,6 @@ async def post_advise_compare(request: AdviseRequest, retriever: Retriever = Dep
             "error_type": type(e).__name__
         })
         raise HTTPException(status_code=500, detail="An internal error occurred while processing compare request.")
-
-
-# --- Demo persona helpers and endpoint ---
-
-def _persona_to_advise_request(persona: str) -> Optional[AdviseRequest]:
-    """Map a demo persona key to a concrete AdviseRequest.
-
-    Keep this minimal and deterministic for demo purposes. If an unknown persona
-    is provided, return None so the caller can decide how to handle it.
-    """
-    key = (persona or '').strip().lower()
-    if key == "qa_to_sdet":
-        profile = UserProfile(
-            current_skills=[
-                SkillDetail(name="Manual Testing", expertise="Advanced"),
-                SkillDetail(name="Test Case Design", expertise="Advanced"),
-                SkillDetail(name="JIRA", expertise="Intermediate"),
-                SkillDetail(name="Python", expertise="Beginner"),
-                SkillDetail(name="Selenium", expertise="Beginner"),
-            ],
-            goal_role="Software Development Engineer in Test (SDET)",
-            years_experience=3,
-        )
-        return AdviseRequest(
-            profile=profile,
-            user_context={"time_per_week_hours": 6, "preference": "hands-on"},
-            search_online=True,
-            retrieval_mode="hybrid",
-            target_skills=["Test Automation", "Python", "CI/CD", "Selenium", "PyTest"],
-            generate_pdf=False,
-        )
-    elif key == "fe_to_fullstack":
-        profile = UserProfile(
-            current_skills=[
-                SkillDetail(name="JavaScript", expertise="Advanced"),
-                SkillDetail(name="React", expertise="Intermediate"),
-                SkillDetail(name="HTML", expertise="Advanced"),
-                SkillDetail(name="CSS", expertise="Advanced"),
-                SkillDetail(name="Node.js", expertise="Beginner"),
-            ],
-            goal_role="Full-Stack Developer",
-            years_experience=4,
-        )
-        return AdviseRequest(
-            profile=profile,
-            user_context={"time_per_week_hours": 8},
-            search_online=True,
-            retrieval_mode="hybrid",
-            target_skills=["Backend APIs", "Databases", "Node.js", "SQL", "Auth"],
-            generate_pdf=False,
-        )
-    else:
-        return None
-
-
-def _read_metrics_reports() -> Dict[str, Any]:
-    """Read metrics/*.csv and parse similarly to GET /metrics/reports."""
-    metrics_dir = Path("metrics")
-    reports: Dict[str, Any] = {}
-    if not metrics_dir.exists() or not metrics_dir.is_dir():
-        return reports
-
-    def _parse_value(k: str, v: str):
-        if v is None:
-            return None
-        s = str(v)
-        if s.lower() in ("true", "false"):
-            return s.lower() == "true"
-        try:
-            if s.isdigit() or (s.startswith("-") and s[1:].isdigit()):
-                return int(s)
-            return float(s)
-        except Exception:
-            return v
-
-    for csv_file in metrics_dir.glob("*.csv"):
-        name = csv_file.stem
-        if name.endswith("_metrics"):
-            name = name[:-9]
-        rows: List[Dict[str, Any]] = []
-        try:
-            with open(csv_file, "r", newline="", encoding="utf-8") as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    parsed: Dict[str, Any] = {}
-                    for k, v in row.items():
-                        if k == "metadata":
-                            try:
-                                parsed[k] = json.loads(v) if v else {}
-                            except Exception:
-                                parsed[k] = {"raw": v}
-                        elif k in ("duration_ms", "cost_usd", "tokens_used", "accuracy_score", "total_items", "correct_items"):
-                            try:
-                                parsed[k] = _parse_value(k, v)
-                            except Exception:
-                                parsed[k] = v
-                        elif k == "success":
-                            parsed[k] = str(v).lower() == "true"
-                        else:
-                            parsed[k] = v
-                    rows.append(parsed)
-        except FileNotFoundError:
-            rows = []
-        except Exception as e:
-            logger.warning(f"metrics_report_parse_failed file={csv_file.name}: {e}")
-            rows = []
-        reports[name] = rows
-    return reports
-
-
-@router.post("/demo/persona", response_model=ApiResponse[DemoPersonaResponse])
-@cache(expire=30)
-async def post_demo_persona(request: DemoPersonaRequest, retriever: Retriever = Depends(get_retriever)) -> ApiResponse[DemoPersonaResponse]:
-    """Centralized endpoint to power a single-screen demo for a given persona.
-
-    Workflow:
-    - Resolve a concrete AdviseRequest from the `persona` key or `override` payload.
-    - Call advise_compare to get ablation study results.
-    - Call advise to get the main plan (with potential alternative).
-    - Read latest metrics reports from metrics/.
-    - Return all in a single structured response.
-    """
-    req_id = str(uuid4())
-    set_request_id(req_id)
-
-    try:
-        if request.override is not None:
-            advise_request = request.override
-        else:
-            advise_request = _persona_to_advise_request(request.persona)
-
-        if advise_request is None:
-            raise HTTPException(status_code=400, detail=f"Unknown persona '{request.persona}'. Provide 'override' to customize.")
-
-        logger.info("demo_persona_received", extra={
-            "request_id": req_id,
-            "persona": request.persona,
-            "goal_role": advise_request.profile.goal_role,
-            "current_skills_count": len(advise_request.profile.current_skills) if advise_request.profile.current_skills else 0,
-        })
-
-        # Run ablation compare and primary recommend in parallel for speed
-        from asyncio import create_task, gather
-        compare_task = create_task(advise_compare(advise_request, retriever))
-        primary_task = create_task(advise(advise_request, retriever))
-        ablation_results, primary = await gather(compare_task, primary_task)
-
-        # Load metrics reports from disk
-        reports = _read_metrics_reports()
-
-        payload = DemoPersonaResponse(
-            persona=request.persona,
-            primary=primary,
-            ablation_results=ablation_results,
-            reports=reports,
-        )
-
-        logger.info("demo_persona_completed", extra={
-            "request_id": req_id,
-            "persona": request.persona,
-            "ablation_runs": len(ablation_results) if ablation_results else 0,
-            "primary_courses": len(primary.recommended_courses or []),
-        })
-
-        return ApiResponse[DemoPersonaResponse](request_id=req_id, status="ok", data=payload)
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error("demo_persona_failed", extra={
-            "request_id": req_id,
-            "error": str(e),
-            "error_type": type(e).__name__,
-        })
-        raise HTTPException(status_code=500, detail="Failed to build demo persona payload.")
 
 
 @router.get("/metrics/reports")
