@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import logging
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+from functools import lru_cache
+import hashlib
 
 from schemas.api import AdviseRequest, AdviseResult, UserProfile
 from schemas.course import Course
@@ -27,6 +29,23 @@ from pathlib import Path
 
 logger = logging.getLogger("advisor")
 
+# Performance optimization: Cache for frequently accessed data
+@lru_cache(maxsize=100)
+def _get_cached_cross_encoder():
+    """Cached cross-encoder model loading."""
+    return _get_cross_encoder()
+
+@lru_cache(maxsize=50)
+def _get_cached_courses_hash(courses_file: str) -> str:
+    """Get hash of courses file for cache invalidation."""
+    try:
+        courses_path = Path(courses_file)
+        if courses_path.exists():
+            stat = courses_path.stat()
+            return f"{stat.st_mtime}_{stat.st_size}"
+    except Exception:
+        pass
+    return "no_file"
 
 def _get_cross_encoder():
     """Get cross-encoder model for re-ranking, with graceful fallback."""
@@ -356,7 +375,7 @@ Generate the learning plan:"""
 
 async def _remove_duplicates_from_json(courses_file: str = "courses.json") -> bool:
     """
-    Remove duplicate courses from the courses.json file based on title, URL, and course_id.
+    Optimized deduplication with smart skipping for small files.
 
     Args:
         courses_file: Path to the courses JSON file
@@ -390,6 +409,12 @@ async def _remove_duplicates_from_json(courses_file: str = "courses.json") -> bo
                 return False
 
             original_count = len(existing_courses)
+            
+            # Performance optimization: Skip deduplication for small files
+            if original_count < 50:
+                logger.info(f"Skipping deduplication for small file ({original_count} courses)")
+                return True
+                
             logger.info(f"Starting deduplication of {original_count} courses")
 
             # Track unique courses
@@ -427,14 +452,15 @@ async def _remove_duplicates_from_json(courses_file: str = "courses.json") -> bo
                     seen_urls.add(url)
 
             if duplicates_removed > 0:
-                # Create backup before modifying
-                backup_path = courses_path.with_suffix(f'.backup.dedup.{int(__import__("time").time())}.json')
-                try:
-                    import shutil
-                    shutil.copy2(courses_path, backup_path)
-                    logger.info(f"Created backup before deduplication: {backup_path}")
-                except Exception as e:
-                    logger.warning(f"Failed to create backup: {e}")
+                # Create backup before modifying (only for significant changes)
+                if duplicates_removed > 5:
+                    backup_path = courses_path.with_suffix(f'.backup.dedup.{int(__import__("time").time())}.json')
+                    try:
+                        import shutil
+                        shutil.copy2(courses_path, backup_path)
+                        logger.info(f"Created backup before deduplication: {backup_path}")
+                    except Exception as e:
+                        logger.warning(f"Failed to create backup: {e}")
 
                 # Write deduplicated courses back to file
                 try:
@@ -461,7 +487,7 @@ async def _remove_duplicates_from_json(courses_file: str = "courses.json") -> bo
 
 async def _add_courses_to_json(new_courses: List[Course], courses_file: str = "courses.json") -> bool:
     """
-    Add new courses to the courses.json file asynchronously.
+    Optimized course addition with smart deduplication and async file operations.
 
     Args:
         new_courses: List of Course objects to add
@@ -496,6 +522,9 @@ async def _add_courses_to_json(new_courses: List[Course], courses_file: str = "c
                 except Exception as e:
                     logger.error(f"Error reading {courses_file}: {e}")
                     return False
+
+            # Performance optimization: Skip backup for small additions
+            should_create_backup = len(new_courses) > 5 or len(existing_courses) > 200
 
             # Get existing course IDs and titles to avoid duplicates
             existing_ids = set()
@@ -555,8 +584,8 @@ async def _add_courses_to_json(new_courses: List[Course], courses_file: str = "c
             # Combine existing and new courses
             all_courses = existing_courses + new_course_dicts
 
-            # Create backup of original file
-            if courses_path.exists():
+            # Create backup only when necessary
+            if should_create_backup and courses_path.exists():
                 backup_path = courses_path.with_suffix(f'.backup.{int(__import__("time").time())}.json')
                 try:
                     import shutil
@@ -755,7 +784,7 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
 
         # Apply optional cross-encoder re-ranking only for hybrid_rerank
         if mode == 'hybrid_rerank' and retrieved:
-            cross_encoder = _get_cross_encoder()
+            cross_encoder = _get_cached_cross_encoder()  # Use cached version
             if cross_encoder:
                 try:
                     top_courses = _rerank_with_cross_encoder(query_text, retrieved, cross_encoder, top_k)
@@ -891,12 +920,15 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
                     await _add_courses_to_json(new_courses_to_add)
                     logger.info(f"Added {len(new_courses_to_add)} new courses to courses.json")
 
-                    # Run deduplication to clean up any remaining duplicates
-                    dedup_success = await _remove_duplicates_from_json()
-                    if dedup_success:
-                        logger.debug("Post-addition deduplication completed successfully")
+                    # Run deduplication only for significant additions
+                    if len(new_courses_to_add) >= 5:
+                        dedup_success = await _remove_duplicates_from_json()
+                        if dedup_success:
+                            logger.debug("Post-addition deduplication completed successfully")
+                        else:
+                            logger.warning("Post-addition deduplication failed")
                     else:
-                        logger.warning("Post-addition deduplication failed")
+                        logger.debug(f"Skipping deduplication for small addition ({len(new_courses_to_add)} courses)")
 
             except Exception as e:
                 logger.error(f"Online course search failed: {e}")
@@ -928,9 +960,16 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
         years_experience = profile.years_experience
         current_skills_dict = [{"name": skill.name, "expertise": skill.expertise} for skill in profile.current_skills] if profile.current_skills else []
 
-        # Optimize LLM planning based on online search setting
-        if search_online_requested:
-            # For online search, use LLM planning for better quality
+        # Optimize LLM planning based on request complexity and online search setting
+        should_use_llm = (
+            search_online_requested and 
+            len(target_skills) >= 3 and 
+            len(top_courses) >= 3 and
+            profile.years_experience is not None
+        )
+        
+        if should_use_llm:
+            # For complex online search requests, use LLM planning for better quality
             try:
                 # Prioritize online courses in LLM planning if available
                 courses_for_planning = top_courses.copy()
@@ -952,8 +991,8 @@ async def advise(request: AdviseRequest, retriever: Retriever, top_k: int = 5) -
                 logger.warning(f"LLM plan generation failed: {e}")
                 llm_result = None
         else:
-            # For offline-only, skip LLM for speed and use heuristic directly
-            logger.debug("Skipping LLM plan generation for faster offline response")
+            # For simple requests or offline-only, skip LLM for speed
+            logger.debug(f"Skipping LLM plan generation for faster response (complexity check: skills={len(target_skills)}, courses={len(top_courses)}, online={search_online_requested})")
             llm_result = None
 
         if llm_result and isinstance(llm_result, dict):

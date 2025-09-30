@@ -10,8 +10,45 @@ import random
 import asyncio
 import aiohttp
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 logger = logging.getLogger(__name__)
+
+
+def _create_robust_session() -> requests.Session:
+    """Create a robust session with retry strategy and proper headers."""
+    session = requests.Session()
+    
+    # Configure retry strategy
+    retry_strategy = Retry(
+        total=3,
+        backoff_factor=1,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["HEAD", "GET", "OPTIONS"]
+    )
+    
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    
+    # Set default headers
+    session.headers.update({
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'DNT': '1',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Cache-Control': 'max-age=0'
+    })
+    
+    return session
 
 
 def _extract_skills_from_text(text: str) -> List[str]:
@@ -192,18 +229,23 @@ def _calculate_relevance_score(course_title: str, course_description: str, skill
 
 
 def _crawl_coursera(query: str, max_courses: int) -> List[Dict[str, Any]]:
-    """Crawl Coursera courses for the given query."""
+    """Crawl Coursera courses for the given query with robust error handling."""
     courses = []
     try:
         logger.info(f"Searching Coursera for: {query}")
         encoded_query = quote(query)
         url = f"https://www.coursera.org/search?query={encoded_query}"
 
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        }
+        # Use robust session with retry strategy
+        session = _create_robust_session()
+        session.headers.update({
+            'Referer': 'https://www.coursera.org/'
+        })
 
-        response = requests.get(url, headers=headers, timeout=10)
+        # Add random delay to avoid rate limiting
+        time.sleep(random.uniform(0.5, 1.5))
+
+        response = session.get(url, timeout=15)
         response.raise_for_status()
 
         soup = BeautifulSoup(response.content, "html.parser")
@@ -293,134 +335,238 @@ def _crawl_coursera(query: str, max_courses: int) -> List[Dict[str, Any]]:
 
 
 def _crawl_udemy(query: str, max_courses: int) -> List[Dict[str, Any]]:
-    """Crawl Udemy courses for the given query."""
+    """Enhanced Udemy crawler with improved error handling and multiple strategies."""
     courses = []
-    try:
-        logger.info(f"Searching Udemy for: {query}")
-        encoded_query = quote(query)
-        url = f"https://www.udemy.com/courses/search/?q={encoded_query}"
-
-        # Enhanced headers to avoid 403 Forbidden
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'DNT': '1',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
-            'Sec-Fetch-Dest': 'document',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'none',
-            'Sec-Fetch-User': '?1',
-            'Cache-Control': 'max-age=0'
+    
+    # Multiple strategies to try
+    strategies = [
+        {
+            "name": "direct_search",
+            "url_template": "https://www.udemy.com/courses/search/?q={query}",
+            "headers": {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'DNT': '1',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Sec-Fetch-User': '?1',
+                'Cache-Control': 'max-age=0',
+                'Referer': 'https://www.google.com/'
+            }
+        },
+        {
+            "name": "api_search",
+            "url_template": "https://www.udemy.com/api-2.0/courses/?search={query}&page_size={max_courses}",
+            "headers": {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'application/json, text/plain, */*',
+                'Referer': 'https://www.udemy.com/'
+            }
         }
-
-        # Add session for better request handling
-        session = requests.Session()
-        session.headers.update(headers)
-
-        # Add longer delay before Udemy request
-        time.sleep(random.uniform(0.5, 1.0))
-
-        response = session.get(url, timeout=15)
-        response.raise_for_status()
-
-        soup = BeautifulSoup(response.content, "html.parser")
-
-        # More specific selectors for Udemy course cards
-        course_selectors = [
-            "div[data-purpose='course-card-wrapper']",
-            "div[data-purpose='course-card']",
-            "div.course-card--container--1QM2W",
-            "div[class*='course-card--container']",
-            "div.course-list--container--FP33M div[data-purpose='course-card']"
-        ]
-
-        course_cards = []
-        for selector in course_selectors:
-            course_cards = soup.select(selector)
-            if course_cards:
-                break
-
-        logger.info(f"Found {len(course_cards)} Udemy course cards")
-
-        for i, card in enumerate(course_cards[:max_courses]):
-            try:
-                # Extract title
-                title_selectors = ["h3", "h2", ".ud-heading-md", "[data-testid='course-title']"]
-                title = None
-                for selector in title_selectors:
-                    title_elem = card.select_one(selector)
-                    if title_elem:
-                        title = title_elem.get_text(strip=True)
-                        break
-
-                if not title:
-                    continue
-
-                # Extract description
-                desc_selectors = ["p", ".ud-text-sm", "[data-testid='course-headline']"]
-                description = ""
-                for selector in desc_selectors:
-                    desc_elem = card.select_one(selector)
-                    if desc_elem:
-                        description = desc_elem.get_text(strip=True)
-                        break
-
-                # Extract URL with improved selectors
-                link_selectors = [
-                    "a[href*='/course/']",
-                    "a[data-testid='course-title']",
-                    "h3 a", "h2 a", "a[href]"
-                ]
-                course_url = None
-                for selector in link_selectors:
-                    link_elem = card.select_one(selector)
-                    if link_elem:
-                        href = link_elem.get('href')
-                        if href:
-                            if href.startswith('http'):
-                                course_url = href
-                            else:
-                                course_url = urljoin("https://www.udemy.com", href)
+    ]
+    
+    for strategy in strategies:
+        try:
+            logger.info(f"Trying Udemy strategy: {strategy['name']} for query: {query}")
+            
+            if strategy["name"] == "api_search":
+                # Try API approach first (more reliable)
+                url = strategy["url_template"].format(query=encoded_query, max_courses=max_courses)
+                
+                session = requests.Session()
+                session.headers.update(strategy["headers"])
+                
+                # Add delay
+                time.sleep(random.uniform(1.0, 2.0))
+                
+                response = session.get(url, timeout=20)
+                
+                if response.status_code == 200:
+                    try:
+                        data = response.json()
+                        results = data.get('results', [])
+                        
+                        for course_data in results[:max_courses]:
+                            try:
+                                title = course_data.get('title', '').strip()
+                                if not title:
+                                    continue
+                                
+                                description = course_data.get('headline', '')
+                                url_path = course_data.get('url', '')
+                                course_url = f"https://www.udemy.com{url_path}" if url_path else None
+                                
+                                # Extract skills and metadata
+                                full_text = f"{title} {description}"
+                                skills = _extract_skills_from_text(full_text)
+                                difficulty = _determine_difficulty(full_text)
+                                duration = _estimate_duration(full_text)
+                                
+                                course = {
+                                    "title": title,
+                                    "description": description,
+                                    "skills": skills,
+                                    "difficulty": difficulty,
+                                    "duration_weeks": duration,
+                                    "provider": "Udemy",
+                                    "url": course_url,
+                                    "source": "Udemy API",
+                                    "search_query": query
+                                }
+                                
+                                courses.append(course)
+                                logger.debug(f"Extracted Udemy course via API: {title}")
+                                
+                            except Exception as e:
+                                logger.warning(f"Error processing Udemy API course: {e}")
+                                continue
+                        
+                        if courses:
+                            logger.info(f"Successfully extracted {len(courses)} courses from Udemy API")
+                            return courses
+                            
+                    except json.JSONDecodeError:
+                        logger.warning("Udemy API returned non-JSON response")
+                        continue
+                        
+            else:
+                # Traditional HTML scraping approach
+                encoded_query = quote(query)
+                url = strategy["url_template"].format(query=encoded_query)
+                
+                session = requests.Session()
+                session.headers.update(strategy["headers"])
+                
+                # Add delay
+                time.sleep(random.uniform(1.5, 3.0))
+                
+                response = session.get(url, timeout=20)
+                
+                if response.status_code == 200:
+                    soup = BeautifulSoup(response.content, "html.parser")
+                    
+                    # Enhanced selectors for Udemy course cards
+                    course_selectors = [
+                        "div[data-purpose='course-card-wrapper']",
+                        "div[data-purpose='course-card']",
+                        "div.course-card--container--1QM2W",
+                        "div[class*='course-card--container']",
+                        "div.course-list--container--FP33M div[data-purpose='course-card']",
+                        "div[class*='course-card']",
+                        "div[data-testid='course-card']"
+                    ]
+                    
+                    course_cards = []
+                    for selector in course_selectors:
+                        course_cards = soup.select(selector)
+                        if course_cards:
                             break
-
-                # Extract skills and metadata
-                full_text = f"{title} {description}"
-                skills = _extract_skills_from_text(full_text)
-                difficulty = _determine_difficulty(full_text)
-                duration = _estimate_duration(full_text)
-
-                course_data = {
-                    "title": title,
-                    "description": description,
-                    "skills": skills,
-                    "difficulty": difficulty,
-                    "duration_weeks": duration,
-                    "provider": "Udemy",
-                    "url": course_url,
-                    "source": "Udemy",
-                    "search_query": query
-                }
-
-                courses.append(course_data)
-                logger.debug(f"Extracted Udemy course: {title}")
-
-            except Exception as e:
-                logger.warning(f"Error processing Udemy course card {i}: {e}")
-                continue
-
-    except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 403:
-            logger.warning(f"Udemy blocked request (403 Forbidden). Skipping Udemy for this search.")
-        else:
-            logger.error(f"HTTP error crawling Udemy: {e}")
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Network error crawling Udemy: {e}")
-    except Exception as e:
-        logger.error(f"Unexpected error crawling Udemy: {e}")
-
+                    
+                    logger.info(f"Found {len(course_cards)} Udemy course cards via HTML")
+                    
+                    for i, card in enumerate(course_cards[:max_courses]):
+                        try:
+                            # Extract title with multiple selectors
+                            title_selectors = [
+                                "h3", "h2", ".ud-heading-md", 
+                                "[data-testid='course-title']",
+                                "a[data-purpose='course-title-link']",
+                                ".course-card--course-title--2f7tE"
+                            ]
+                            title = None
+                            for selector in title_selectors:
+                                title_elem = card.select_one(selector)
+                                if title_elem:
+                                    title = title_elem.get_text(strip=True)
+                                    if title:
+                                        break
+                            
+                            if not title:
+                                continue
+                            
+                            # Extract description
+                            desc_selectors = [
+                                "p", ".ud-text-sm", "[data-testid='course-headline']",
+                                ".course-card--course-headline--2f7tE",
+                                ".course-card--course-description--2f7tE"
+                            ]
+                            description = ""
+                            for selector in desc_selectors:
+                                desc_elem = card.select_one(selector)
+                                if desc_elem:
+                                    description = desc_elem.get_text(strip=True)
+                                    if description:
+                                        break
+                            
+                            # Extract URL
+                            link_selectors = [
+                                "a[href*='/course/']",
+                                "a[data-testid='course-title']",
+                                "a[data-purpose='course-title-link']",
+                                "h3 a", "h2 a", "a[href]"
+                            ]
+                            course_url = None
+                            for selector in link_selectors:
+                                link_elem = card.select_one(selector)
+                                if link_elem:
+                                    href = link_elem.get('href')
+                                    if href:
+                                        if href.startswith('http'):
+                                            course_url = href
+                                        else:
+                                            course_url = urljoin("https://www.udemy.com", href)
+                                        break
+                            
+                            # Extract skills and metadata
+                            full_text = f"{title} {description}"
+                            skills = _extract_skills_from_text(full_text)
+                            difficulty = _determine_difficulty(full_text)
+                            duration = _estimate_duration(full_text)
+                            
+                            course_data = {
+                                "title": title,
+                                "description": description,
+                                "skills": skills,
+                                "difficulty": difficulty,
+                                "duration_weeks": duration,
+                                "provider": "Udemy",
+                                "url": course_url,
+                                "source": "Udemy HTML",
+                                "search_query": query
+                            }
+                            
+                            courses.append(course_data)
+                            logger.debug(f"Extracted Udemy course via HTML: {title}")
+                            
+                        except Exception as e:
+                            logger.warning(f"Error processing Udemy course card {i}: {e}")
+                            continue
+                    
+                    if courses:
+                        logger.info(f"Successfully extracted {len(courses)} courses from Udemy HTML")
+                        return courses
+                        
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 403:
+                logger.warning(f"Udemy blocked request (403 Forbidden) with strategy: {strategy['name']}")
+            elif e.response.status_code == 429:
+                logger.warning(f"Udemy rate limited (429) with strategy: {strategy['name']}")
+            else:
+                logger.error(f"HTTP error crawling Udemy with {strategy['name']}: {e}")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Network error crawling Udemy with {strategy['name']}: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error crawling Udemy with {strategy['name']}: {e}")
+        
+        # Add delay between strategies
+        time.sleep(random.uniform(2.0, 4.0))
+    
+    logger.warning("All Udemy crawling strategies failed")
     return courses
 
 
@@ -535,10 +681,221 @@ def _crawl_edx(query: str, max_courses: int) -> List[Dict[str, Any]]:
     return courses
 
 
+def _crawl_google_digital_garage(query: str, max_courses: int) -> List[Dict[str, Any]]:
+    """Crawl Google Digital Garage courses for the given query."""
+    courses = []
+    try:
+        logger.info(f"Searching Google Digital Garage for: {query}")
+        encoded_query = quote(query)
+        url = f"https://learndigital.withgoogle.com/digitalgarage/search?q={encoded_query}"
+
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Referer': 'https://learndigital.withgoogle.com/'
+        }
+
+        response = requests.get(url, headers=headers, timeout=15)
+        response.raise_for_status()
+
+        soup = BeautifulSoup(response.content, "html.parser")
+
+        # Google Digital Garage course selectors
+        course_selectors = [
+            "div[class*='course-card']",
+            "div[class*='CourseCard']",
+            "div[data-testid='course-card']",
+            "article[class*='course']",
+            ".course-item"
+        ]
+
+        course_cards = []
+        for selector in course_selectors:
+            course_cards = soup.select(selector)
+            if course_cards:
+                break
+
+        logger.info(f"Found {len(course_cards)} Google Digital Garage course cards")
+
+        for i, card in enumerate(course_cards[:max_courses]):
+            try:
+                # Extract title
+                title_selectors = ["h3", "h2", "[data-testid='course-title']", ".course-title"]
+                title = None
+                for selector in title_selectors:
+                    title_elem = card.select_one(selector)
+                    if title_elem:
+                        title = title_elem.get_text(strip=True)
+                        break
+
+                if not title:
+                    continue
+
+                # Extract description
+                desc_selectors = ["p", ".course-description", "[data-testid='course-description']"]
+                description = ""
+                for selector in desc_selectors:
+                    desc_elem = card.select_one(selector)
+                    if desc_elem:
+                        description = desc_elem.get_text(strip=True)
+                        break
+
+                # Extract URL
+                link_selectors = ["a[href]", "a[data-testid='course-link']"]
+                course_url = None
+                for selector in link_selectors:
+                    link_elem = card.select_one(selector)
+                    if link_elem:
+                        href = link_elem.get('href')
+                        if href:
+                            if href.startswith('http'):
+                                course_url = href
+                            else:
+                                course_url = urljoin("https://learndigital.withgoogle.com", href)
+                            break
+
+                # Extract skills and metadata
+                full_text = f"{title} {description}"
+                skills = _extract_skills_from_text(full_text)
+                difficulty = _determine_difficulty(full_text)
+                duration = _estimate_duration(full_text)
+
+                course_data = {
+                    "title": title,
+                    "description": description,
+                    "skills": skills,
+                    "difficulty": difficulty,
+                    "duration_weeks": duration,
+                    "provider": "Google Digital Garage",
+                    "url": course_url,
+                    "source": "Google Digital Garage",
+                    "search_query": query
+                }
+
+                courses.append(course_data)
+                logger.debug(f"Extracted Google Digital Garage course: {title}")
+
+            except Exception as e:
+                logger.warning(f"Error processing Google Digital Garage course card {i}: {e}")
+                continue
+
+    except Exception as e:
+        logger.error(f"Error crawling Google Digital Garage: {e}")
+
+    return courses
+
+
+def _crawl_google_cloud_training(query: str, max_courses: int) -> List[Dict[str, Any]]:
+    """Crawl Google Cloud Training courses for the given query."""
+    courses = []
+    try:
+        logger.info(f"Searching Google Cloud Training for: {query}")
+        encoded_query = quote(query)
+        # Use the correct Google Cloud Skills Boost URL
+        url = f"https://www.cloudskillsboost.google/catalog?search={encoded_query}"
+
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Referer': 'https://www.cloudskillsboost.google/'
+        }
+
+        response = requests.get(url, headers=headers, timeout=15)
+        response.raise_for_status()
+
+        soup = BeautifulSoup(response.content, "html.parser")
+
+        # Google Cloud Training course selectors
+        course_selectors = [
+            "div[class*='quest-card']",
+            "div[class*='course-card']",
+            "div[data-testid='quest-card']",
+            "div[class*='QuestCard']",
+            "article[class*='quest']"
+        ]
+
+        course_cards = []
+        for selector in course_selectors:
+            course_cards = soup.select(selector)
+            if course_cards:
+                break
+
+        logger.info(f"Found {len(course_cards)} Google Cloud Training course cards")
+
+        for i, card in enumerate(course_cards[:max_courses]):
+            try:
+                # Extract title
+                title_selectors = ["h3", "h2", "[data-testid='quest-title']", ".quest-title"]
+                title = None
+                for selector in title_selectors:
+                    title_elem = card.select_one(selector)
+                    if title_elem:
+                        title = title_elem.get_text(strip=True)
+                        break
+
+                if not title:
+                    continue
+
+                # Extract description
+                desc_selectors = ["p", ".quest-description", "[data-testid='quest-description']"]
+                description = ""
+                for selector in desc_selectors:
+                    desc_elem = card.select_one(selector)
+                    if desc_elem:
+                        description = desc_elem.get_text(strip=True)
+                        break
+
+                # Extract URL
+                link_selectors = ["a[href]", "a[data-testid='quest-link']"]
+                course_url = None
+                for selector in link_selectors:
+                    link_elem = card.select_one(selector)
+                    if link_elem:
+                        href = link_elem.get('href')
+                        if href:
+                            if href.startswith('http'):
+                                course_url = href
+                            else:
+                                course_url = urljoin("https://www.cloudskillsboost.google", href)
+                            break
+
+                # Extract skills and metadata
+                full_text = f"{title} {description}"
+                skills = _extract_skills_from_text(full_text)
+                difficulty = _determine_difficulty(full_text)
+                duration = _estimate_duration(full_text)
+
+                course_data = {
+                    "title": title,
+                    "description": description,
+                    "skills": skills,
+                    "difficulty": difficulty,
+                    "duration_weeks": duration,
+                    "provider": "Google Cloud Training",
+                    "url": course_url,
+                    "source": "Google Cloud Training",
+                    "search_query": query
+                }
+
+                courses.append(course_data)
+                logger.debug(f"Extracted Google Cloud Training course: {title}")
+
+            except Exception as e:
+                logger.warning(f"Error processing Google Cloud Training course card {i}: {e}")
+                continue
+
+    except Exception as e:
+        logger.error(f"Error crawling Google Cloud Training: {e}")
+
+    return courses
+
+
 def crawl_courses(query: str = None, max_courses: int = 10) -> List[Dict[str, Any]]:
     """
-    Enhanced course crawler that searches for courses based on query and extracts detailed information.
-    Now uses concurrent execution for improved performance.
+    Enhanced course crawler with multiple platforms including Google learning resources.
+    Uses intelligent platform selection and improved error handling.
 
     Args:
         query: Search query for courses (e.g., "python", "data science", "machine learning")
@@ -550,35 +907,43 @@ def crawl_courses(query: str = None, max_courses: int = 10) -> List[Dict[str, An
     if not query:
         query = "programming"  # Default query
 
-    # Calculate courses per provider
-    courses_per_provider = max(max_courses // 3, 2)
+    # Calculate courses per provider (now supporting 5 platforms)
+    courses_per_provider = max(max_courses // 5, 2)
 
-    # Use ThreadPoolExecutor for concurrent crawling
+    # Use ThreadPoolExecutor for concurrent crawling with all platforms
     all_courses = []
 
-    with ThreadPoolExecutor(max_workers=3) as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         # Submit all crawling tasks concurrently
         future_to_provider = {
             executor.submit(_crawl_coursera, query, courses_per_provider): "Coursera",
             executor.submit(_crawl_udemy, query, courses_per_provider): "Udemy",
-            executor.submit(_crawl_edx, query, courses_per_provider): "edX"
+            executor.submit(_crawl_edx, query, courses_per_provider): "edX",
+            executor.submit(_crawl_google_digital_garage, query, courses_per_provider): "Google Digital Garage",
+            executor.submit(_crawl_google_cloud_training, query, courses_per_provider): "Google Cloud Training"
         }
 
-        # Collect results as they complete
-        for future in as_completed(future_to_provider):
+        # Collect results as they complete with timeout
+        for future in as_completed(future_to_provider, timeout=20):  # 20 second timeout
             provider = future_to_provider[future]
             try:
                 provider_courses = future.result()
                 all_courses.extend(provider_courses)
                 logger.debug(f"Completed crawling {provider}: {len(provider_courses)} courses")
             except Exception as e:
-                logger.error(f"Error in {provider} crawling thread: {e}")
+                logger.warning(f"Error in {provider} crawling thread: {e}")
                 continue
 
-    # Filter and return only quality courses (no fallback generation)
+    # Filter and return only quality courses
     quality_courses = [c for c in all_courses if c.get('title') and len(c.get('title', '')) > 5]
 
-    logger.info(f"Total courses crawled: {len(quality_courses)}")
+    # If we don't have enough courses, use fallback courses
+    if len(quality_courses) < max_courses // 2:
+        logger.info(f"Only found {len(quality_courses)} courses, adding fallback courses")
+        fallback_courses = _get_fallback_courses(query, max_courses - len(quality_courses))
+        quality_courses.extend(fallback_courses)
+
+    logger.info(f"Total courses crawled: {len(quality_courses)} from 5 platforms")
     return quality_courses[:max_courses]
 
 

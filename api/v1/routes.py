@@ -34,6 +34,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from schemas.api import AdviseRequest, AdviseResult, ApiResponse, SkillDetail, UserProfile
 from schemas.course import Course
 from services.advisor_service import advise, advise_compare
+from services.enhanced_advisor_service import enhanced_advise
 from services.retriever import Retriever, get_retriever
 from services.course_manager import CourseManager
 from services.pii_redaction import PIIRedactor, create_safe_logging_config
@@ -95,7 +96,8 @@ async def post_advise(request: AdviseRequest, retriever: Retriever = Depends(get
     req_id = str(uuid4())
     set_request_id(req_id)
     try:
-        result = await advise(request, retriever)
+        # Use enhanced advisor service for better performance and offline support
+        result = await enhanced_advise(request, retriever)
 
         # Log with PII redaction for privacy compliance
         safe_request_data = pii_redactor.redact_request_data(request.model_dump())
@@ -595,7 +597,7 @@ async def get_metrics_reports():
         for csv_file in metrics_dir.glob("*.csv"):
             name = csv_file.stem
             if name.endswith("_metrics"):
-                name = name[:-9]  # remove suffix
+                name = name[:-8]  # remove "_metrics" suffix (8 characters)
             rows: List[Dict[str, Any]] = []
             try:
                 with open(csv_file, "r", newline="", encoding="utf-8") as f:

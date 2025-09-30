@@ -1866,5 +1866,180 @@
       "crawled_at": "2025-09-30T02:15:51.196022",
       "auto_added": true
     }
+  },
+  {
+    "course_id": "online-coursera-80c64f22",
+    "title": "IBM Front-End Developer",
+    "skills": [
+      "github",
+      "mongodb",
+      "agile",
+      "react",
+      "html",
+      "bootstrap",
+      "git",
+      "css",
+      "user experience"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/ibm-frontend-developer",
+    "metadata": {
+      "description": "Skills you'll gain:Bootstrap (Front-End Framework), Software Development Life Cycle, Software Architecture, React Redux, Cloud-Native Computing, Responsive Web Design, NoSQL, Git (Version Control System), GitHub, Webpack, Application Development, MongoDB, Agile Methodology, Software Design, Cascading Style Sheets (CSS), React.js, Browser Compatibility, HTML and CSS, User Experience Design, Engineering Software",
+      "source": "Coursera",
+      "search_query": "Front end developer",
+      "crawled_at": "2025-09-30T10:00:54.773572",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-3b69aae6",
+    "title": "Selenium Python Automation Testing and Frameworks",
+    "skills": [
+      "python",
+      "html"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/packt-selenium-python-automation-testing-from-scratch-and-frameworks",
+    "metadata": {
+      "description": "Skills you'll gain:Automation, Scripting, Hypertext Markup Language (HTML), File Management, Development Environment, Debugging, Software Design Patterns",
+      "source": "Coursera",
+      "search_query": "Automation testing",
+      "crawled_at": "2025-09-30T12:53:30.050782",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-4cc54827",
+    "title": "Learn Automation Testing with Java and Selenium Webdriver",
+    "skills": [
+      "java",
+      "css",
+      "html"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/specializations/packt-learn-automation-testing-with-java-and-selenium-webdriver",
+    "metadata": {
+      "description": "Skills you'll gain:Selenium (Software), Object Oriented Programming (OOP), Eclipse (Software), Java, Java Programming, JUnit, HTML and CSS, Object Oriented Design, Test Automation, Software Testing, Integrated Development Environments, Test Data, Browser Compatibility, Computer Programming, Web Development, Programming Principles, Test Case, Development Environment, Continuous Integration, Automation",
+      "source": "Coursera",
+      "search_query": "Automation testing",
+      "crawled_at": "2025-09-30T12:53:30.050907",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-41c737ee",
+    "title": "Google IT Automation with Python",
+    "skills": [
+      "github",
+      "puppet",
+      "communication",
+      "ci/cd",
+      "git",
+      "python"
+    ],
+    "difficulty": "advanced",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/professional-certificates/google-it-automation",
+    "metadata": {
+      "description": "Skills you'll gain:Git (Version Control System), GitHub, Version Control, Cloud Services, Debugging, Puppet (Configuration Management Tool), Infrastructure as Code (IaC), Bash (Scripting Language), CI/CD, Cloud Computing, Technical Communication, Unit Testing, Web Services, Email Automation, Configuration Management, Automation, Python Programming, Interviewing Skills, Professional Development, Scripting",
+      "source": "Coursera",
+      "search_query": "Automation testing",
+      "crawled_at": "2025-09-30T12:53:58.452301",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-c4dc7d5a",
+    "title": "A Law Student's Toolkit",
+    "skills": [],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/law-student",
+    "metadata": {
+      "description": "Skills you'll gain:Legal Strategy, Legal Proceedings, Legal Research, Legal Writing, Policy Analysis, Case Studies, Learning Strategies, Economics",
+      "source": "Coursera",
+      "search_query": "A",
+      "crawled_at": "2025-09-30T22:24:39.307894",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-fa0dcc90",
+    "title": "Agentic AI and AI Agents: A Primer for Leaders",
+    "skills": [
+      "artificial intelligence"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/agentic-ai",
+    "metadata": {
+      "description": "Skills you'll gain:Generative AI Agents, Workflow Management, Agentic systems, Artificial Intelligence, Business Process Automation, Generative AI, AI Product Strategy, Automation, Prompt Engineering, Technology Strategies, Decision Support Systems, Emerging Technologies, Responsible AI",
+      "source": "Coursera",
+      "search_query": "A",
+      "crawled_at": "2025-09-30T22:24:39.308014",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-b1ec82cd",
+    "title": "Advanced Valuation and Strategy - M&A, Private Equity, and Venture Capital",
+    "skills": [
+      "finance"
+    ],
+    "difficulty": "advanced",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/advanced-valuation-and-strategy",
+    "metadata": {
+      "description": "Skills you'll gain:Strategic Decision-Making, Business Valuation, Private Equity, Mergers & Acquisitions, Game Theory, Strategic Thinking, Financial Analysis, Business Strategy, Return On Investment, Investment Banking, Cash Flows, Corporate Finance, Competitive Analysis",
+      "source": "Coursera",
+      "search_query": "A",
+      "crawled_at": "2025-09-30T22:24:39.308061",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-313ba7f7",
+    "title": "Start Writing Prompts like a Pro",
+    "skills": [],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": "https://www.coursera.org/learn/google-start-writing-prompts-like-a-pro",
+    "metadata": {
+      "description": "Skills you'll gain:Multimodal Prompts, Prompt Engineering, Prompt Patterns, Responsible AI",
+      "source": "Coursera",
+      "search_query": "A",
+      "crawled_at": "2025-09-30T22:24:39.308093",
+      "auto_added": true
+    }
+  },
+  {
+    "course_id": "online-coursera-55cedd61",
+    "title": "Create a Promotional Video using Canva",
+    "skills": [
+      "marketing",
+      "sales"
+    ],
+    "difficulty": "intermediate",
+    "duration_weeks": 4,
+    "provider": "Coursera",
+    "url": null,
+    "metadata": {
+      "description": "Skills you'll gain:Sales Presentation, Customer Engagement, Canva (Software), Video Production, Marketing Materials, Promotional Materials, Copywriting, Promotional Strategies, Multimedia, Product Promotion, Marketing, Social Media Marketing, Target Audience, Value Propositions, Content Creation, Animations",
+      "source": "Coursera",
+      "search_query": "A",
+      "crawled_at": "2025-09-30T22:24:39.308127",
+      "auto_added": true
+    }
   }
 ]
